@@ -1,0 +1,180 @@
+@Api_HostAddress = http://localhost:5135
+
+# ========================================
+# API Information
+# ========================================
+# Rate Limiting: 100 requests per minute per IP
+# Response: 429 Too Many Requests if exceeded
+# Swagger UI: http://localhost:5135/swagger
+
+### Health Check
+GET {{Api_HostAddress}}/health
+Accept: application/json
+
+###
+
+# ========================================
+# Category Endpoints
+# ========================================
+
+### Get All Categories
+GET {{Api_HostAddress}}/api/category
+Accept: application/json
+
+### Search Categories with Filters
+GET {{Api_HostAddress}}/api/category?text=work&pageSize=20&offset=0
+Accept: application/json
+
+### Get Category by ID
+GET {{Api_HostAddress}}/api/category/00000000-0000-0000-0000-000000000001
+Accept: application/json
+
+### Create Category
+POST {{Api_HostAddress}}/api/category
+Content-Type: application/json
+
+{
+  "name": "Work Projects"
+}
+
+### Update Category
+PUT {{Api_HostAddress}}/api/category/00000000-0000-0000-0000-000000000001
+Content-Type: application/json
+
+{
+  "name": "Updated Work"
+}
+
+### Delete Category
+DELETE {{Api_HostAddress}}/api/category/00000000-0000-0000-0000-000000000001
+
+###
+
+# ========================================
+# List Endpoints
+# ========================================
+
+### Get All Lists
+GET {{Api_HostAddress}}/api/list
+Accept: application/json
+
+### Search Lists with Filters
+GET {{Api_HostAddress}}/api/list?text=shopping&includeArchived=false&pageSize=20
+Accept: application/json
+
+### Get List by ID
+GET {{Api_HostAddress}}/api/list/00000000-0000-0000-0000-000000000001
+Accept: application/json
+
+### Create List
+POST {{Api_HostAddress}}/api/list
+Content-Type: application/json
+
+{
+  "name": "Grocery Shopping",
+  "categoryId": "00000000-0000-0000-0000-000000000001"
+}
+
+### Update List (Rename)
+PUT {{Api_HostAddress}}/api/list/00000000-0000-0000-0000-000000000001
+Content-Type: application/json
+
+{
+  "name": "Weekly Grocery Shopping"
+}
+
+### Close/Archive List
+POST {{Api_HostAddress}}/api/list/00000000-0000-0000-0000-000000000001/close
+
+### Open/Unarchive List
+POST {{Api_HostAddress}}/api/list/00000000-0000-0000-0000-000000000001/open
+
+### Delete List
+DELETE {{Api_HostAddress}}/api/list/00000000-0000-0000-0000-000000000001
+
+###
+
+# ========================================
+# List Item Endpoints
+# ========================================
+
+### Get All Items in a List
+GET {{Api_HostAddress}}/api/lists/00000000-0000-0000-0000-000000000001/items
+Accept: application/json
+
+### Search List Items with Filters
+GET {{Api_HostAddress}}/api/lists/00000000-0000-0000-0000-000000000001/items?text=milk&pageSize=20
+Accept: application/json
+
+### Create List Item
+POST {{Api_HostAddress}}/api/lists/00000000-0000-0000-0000-000000000001/items
+Content-Type: application/json
+
+{
+  "name": "Buy milk",
+  "dueDate": "2026-05-15T10:00:00Z"
+}
+
+### Create List Item without Due Date
+POST {{Api_HostAddress}}/api/lists/00000000-0000-0000-0000-000000000001/items
+Content-Type: application/json
+
+{
+  "name": "Buy bread",
+  "dueDate": null
+}
+
+### Get List Item by ID
+GET {{Api_HostAddress}}/api/lists/00000000-0000-0000-0000-000000000001/items/00000000-0000-0000-0000-000000000002
+Accept: application/json
+
+### Rename List Item
+POST {{Api_HostAddress}}/api/lists/00000000-0000-0000-0000-000000000001/items/00000000-0000-0000-0000-000000000002/rename
+Content-Type: application/json
+
+{
+  "name": "Buy organic milk"
+}
+
+### Set List Item Due Date
+POST {{Api_HostAddress}}/api/lists/00000000-0000-0000-0000-000000000001/items/00000000-0000-0000-0000-000000000002/due-date
+Content-Type: application/json
+
+{
+  "dueDate": "2026-05-16T10:00:00Z"
+}
+
+### Clear List Item Due Date
+POST {{Api_HostAddress}}/api/lists/00000000-0000-0000-0000-000000000001/items/00000000-0000-0000-0000-000000000002/due-date
+Content-Type: application/json
+
+{
+  "dueDate": null
+}
+
+### Reorder List Item (Set Sort Index)
+POST {{Api_HostAddress}}/api/lists/00000000-0000-0000-0000-000000000001/items/00000000-0000-0000-0000-000000000002/reorder
+Content-Type: application/json
+
+{
+  "sortIndex": 5
+}
+
+### Toggle List Item Completion
+POST {{Api_HostAddress}}/api/lists/00000000-0000-0000-0000-000000000001/items/00000000-0000-0000-0000-000000000002/toggle
+
+### Delete List Item
+DELETE {{Api_HostAddress}}/api/lists/00000000-0000-0000-0000-000000000001/items/00000000-0000-0000-0000-000000000002
+
+###
+
+# ========================================
+# Global List Item Search
+# ========================================
+
+### Search All List Items Across All Lists
+GET {{Api_HostAddress}}/api/listitems?text=urgent&pageSize=50&offset=0
+Accept: application/json
+
+###
+
