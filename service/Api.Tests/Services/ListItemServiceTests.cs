@@ -81,53 +81,6 @@ public class ListItemServiceTests
     }
 
     [Fact]
-    public async Task CreateBatchAsync_PersistsAllItemsAndValidatesEach()
-    {
-        var database = new TestDatabase();
-        await using var context = database.CreateContext();
-        var category = AddCategory(context, "Work", UserId);
-        var list = AddList(context, "Sprint", UserId, category.Id);
-        var firstDueDate = new DateTime(2026, 5, 15, 0, 0, 0, DateTimeKind.Utc);
-        var secondDueDate = new DateTime(2026, 5, 16, 0, 0, 0, DateTimeKind.Utc);
-        var validator = new Mock<IEntityValidator<ListItemEntity>>();
-        await context.SaveChangesAsync();
-        var service = CreateService(database, validator.Object);
-
-        await service.CreateBatchAsync(UserId, list.Id, [("First", firstDueDate), ("Second", secondDueDate)]);
-
-        var items = await context.ListItems.OrderBy(li => li.Name).ToListAsync();
-        Assert.Equal(["First", "Second"], items.Select(li => li.Name));
-        Assert.All(items, li =>
-        {
-            Assert.Equal(UserId, li.OwnerId);
-            Assert.Equal(list.Id, li.ParentId);
-            Assert.False(li.IsCompleted);
-        });
-        Assert.Equal(firstDueDate, items[0].DueDate);
-        Assert.Equal(secondDueDate, items[1].DueDate);
-        validator.Verify(v => v.ValidateAsync(It.IsAny<ListItemEntity>()), Times.Exactly(2));
-    }
-
-    [Fact]
-    public async Task CreateBatchAsync_WhenValidationFails_DoesNotPersistAnyItems()
-    {
-        var database = new TestDatabase();
-        await using var context = database.CreateContext();
-        var category = AddCategory(context, "Work", UserId);
-        var list = AddList(context, "Sprint", UserId, category.Id);
-        await context.SaveChangesAsync();
-        var validator = new Mock<IEntityValidator<ListItemEntity>>();
-        validator
-            .Setup(v => v.ValidateAsync(It.Is<ListItemEntity>(li => li.Name == "Bad")))
-            .ThrowsAsync(new ValidationException("Invalid item"));
-        var service = CreateService(database, validator.Object);
-
-        await Assert.ThrowsAsync<ValidationException>(() => service.CreateBatchAsync(UserId, list.Id, [("Good", null), ("Bad", null)]));
-
-        Assert.Empty(await context.ListItems.ToListAsync());
-    }
-
-    [Fact]
     public async Task SearchAsync_ReturnsOwnedItemsFilteredSortedPagedWithParentProjection()
     {
         var database = new TestDatabase();

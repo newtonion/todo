@@ -1,12 +1,10 @@
-using Api.Models.Requests;
-using Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
 {
     /// <summary>
-    /// Manages todo list categories
+    /// Endpoint for user management. Currently only has a single negotiate endpoint that is used to create a user record for the authenticated user after login.
     /// </summary>
     [Authorize]
     [Route("api/[controller]")]

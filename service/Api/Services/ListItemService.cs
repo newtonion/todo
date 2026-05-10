@@ -77,41 +77,6 @@ public class ListItemService : IListItemService
         return newListItem.Id;
     }
 
-    public async Task CreateBatchAsync(Guid userId, Guid listId, IEnumerable<(string name, DateTime? dueDate)> items, CancellationToken cancellationToken = default)
-    {
-        await using var _dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
-        
-        // Verify list exists and user has access
-        var listExists = await _dbContext.Lists
-            .WhereCurrentUserHasAccess(userId)
-            .AnyAsync(l => l.Id == listId, cancellationToken);
-        
-        if (!listExists)
-        {
-            throw new NotFoundException($"List {listId} not found or access denied");
-        }
-        
-        var newListItems = items.Select(item => new ListItemEntity()
-        {
-            OwnerId = userId,
-            Name = item.name,
-            IsCompleted = false,
-            CreatedOn = DateTime.UtcNow,
-            UpdatedOn = DateTime.UtcNow,
-            DueDate = item.dueDate,
-            ParentId = listId 
-        }).ToList();
-
-        // Validate all items
-        foreach (var listItem in newListItems)
-        {
-            await _validator.ValidateAsync(listItem);
-        }
-
-        _dbContext.ListItems.AddRange(newListItems);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-    }
-
     public async Task<SearchResultsResponseModel<ListItemSearchResult>> SearchAsync(Guid userId, ListItemSearchCriteria criteria, CancellationToken cancellationToken = default)
     {
         await using var _dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);

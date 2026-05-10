@@ -51,6 +51,10 @@ builder.Services.AddApplicationServices(builder.Configuration);
 
 var app = builder.Build();
 
+// Middleware
+app.UseMiddleware<CorrelationMiddleware>();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
 {
@@ -75,10 +79,6 @@ app.UseCors("AllowFrontend");
 // Rate limiting (before authentication)
 app.UseRateLimiter();
 
-// Exception handling and correlation tracking (first in pipeline)
-app.UseMiddleware<CorrelationMiddleware>();
-app.UseMiddleware<ExceptionHandlingMiddleware>();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -89,5 +89,4 @@ app.MapHealthChecks("/health");
 
 app.Run();
 
-// Make the implicit Program class available to the test project
 public partial class Program { }
