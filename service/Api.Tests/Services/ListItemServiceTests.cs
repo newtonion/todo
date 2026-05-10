@@ -136,7 +136,8 @@ public class ListItemServiceTests
         var list = AddList(context, "Sprint", UserId, category.Id, archived: true);
         var otherList = AddList(context, "Inbox", UserId, category.Id);
         AddItem(context, "Alpha task", list.Id, UserId, sortIndex: 1);
-        AddItem(context, "Beta task", list.Id, UserId, isCompleted: true, sortIndex: 2);
+        var dueDate = new DateTime(2026, 5, 17, 0, 0, 0, DateTimeKind.Utc);
+        AddItem(context, "Beta task", list.Id, UserId, isCompleted: true, dueDate: dueDate, sortIndex: 2);
         AddItem(context, "Gamma task", list.Id, UserId, sortIndex: 3);
         AddItem(context, "Other parent task", otherList.Id, UserId, sortIndex: 4);
         AddItem(context, "Other user task", list.Id, OtherUserId, sortIndex: 5);
@@ -161,9 +162,8 @@ public class ListItemServiceTests
         Assert.Equal(1, result.Offset);
         var item = Assert.Single(result.Items);
         Assert.Equal("Beta task", item.Name);
-        Assert.Equal("Work", item.Category);
         Assert.True(item.Completed);
-        Assert.True(item.Archived);
+        Assert.Equal(dueDate, item.DueDate);
     }
 
     [Fact]
@@ -246,23 +246,6 @@ public class ListItemServiceTests
     }
 
     [Fact]
-    public async Task SetSortIndexAsync_UpdatesOwnedItemSortIndex()
-    {
-        var database = new TestDatabase();
-        await using var context = database.CreateContext();
-        var category = AddCategory(context, "Work", UserId);
-        var list = AddList(context, "Sprint", UserId, category.Id);
-        var item = AddItem(context, "Task", list.Id, UserId, sortIndex: 1);
-        await context.SaveChangesAsync();
-        var service = CreateService(database);
-
-        await service.SetSortIndexAsync(UserId, item.Id, 9);
-
-        context.ChangeTracker.Clear();
-        Assert.Equal(9, (await context.ListItems.FindAsync(item.Id))!.SortIndex);
-    }
-
-    [Fact]
     public async Task ToggleCompletionAsync_TogglesOwnedItemCompletion()
     {
         var database = new TestDatabase();
@@ -314,7 +297,6 @@ public class ListItemServiceTests
 
         await Assert.ThrowsAsync<NotFoundException>(() => service.RenameAsync(UserId, otherUserItem.Id, "New"));
         await Assert.ThrowsAsync<NotFoundException>(() => service.SetDueDateAsync(UserId, otherUserItem.Id, null));
-        await Assert.ThrowsAsync<NotFoundException>(() => service.SetSortIndexAsync(UserId, otherUserItem.Id, 5));
         await Assert.ThrowsAsync<NotFoundException>(() => service.ToggleCompletionAsync(UserId, otherUserItem.Id));
         await Assert.ThrowsAsync<NotFoundException>(() => service.DeleteAsync(UserId, otherUserItem.Id));
     }

@@ -36,7 +36,7 @@ public class ListItemIntegrationTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task CreateGetRenameDueDateReorderToggleAndDeleteItem()
+    public async Task CreateGetRenameCompletionDueDateToggleAndDeleteItem()
     {
         using var factory = new TodoApiFactory();
         await factory.SeedAsync(context =>
@@ -65,7 +65,6 @@ public class ListItemIntegrationTests : IntegrationTestBase
         Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsJsonAsync($"/api/lists/{listId}/items/{itemId}/rename", new { Name = "Review tests" })).StatusCode);
         var newDueDate = new DateTime(2026, 5, 16, 10, 0, 0, DateTimeKind.Utc);
         Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsJsonAsync($"/api/lists/{listId}/items/{itemId}/due-date", new { DueDate = newDueDate })).StatusCode);
-        Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsJsonAsync($"/api/lists/{listId}/items/{itemId}/reorder", new { SortIndex = 7 })).StatusCode);
         Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsync($"/api/lists/{listId}/items/{itemId}/toggle", null)).StatusCode);
 
         getResponse = await client.GetAsync($"/api/lists/{listId}/items/{itemId}");
@@ -73,7 +72,6 @@ public class ListItemIntegrationTests : IntegrationTestBase
         using var updatedJson = await ReadJsonAsync(getResponse);
         Assert.Equal("Review tests", GetString(updatedJson.RootElement, "name"));
         Assert.Equal(newDueDate, GetDateTime(updatedJson.RootElement, "dueDate"));
-        Assert.Equal(7, GetInt32(updatedJson.RootElement, "sortIndex"));
         Assert.True(GetBoolean(updatedJson.RootElement, "isCompleted"));
 
         Assert.Equal(HttpStatusCode.NoContent, (await client.DeleteAsync($"/api/lists/{listId}/items/{itemId}")).StatusCode);
@@ -139,36 +137,8 @@ public class ListItemIntegrationTests : IntegrationTestBase
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/api/lists/{listId}/items/{itemId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsJsonAsync($"/api/lists/{listId}/items/{itemId}/rename", new { Name = "New" })).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsJsonAsync($"/api/lists/{listId}/items/{itemId}/due-date", new { DueDate = (DateTime?)null })).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsJsonAsync($"/api/lists/{listId}/items/{itemId}/reorder", new { SortIndex = 1 })).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsync($"/api/lists/{listId}/items/{itemId}/toggle", null)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await client.DeleteAsync($"/api/lists/{listId}/items/{itemId}")).StatusCode);
     }
 
-    [Fact]
-    public async Task GlobalSearch_ReturnsOwnedItemsAcrossLists()
-    {
-        using var factory = new TodoApiFactory();
-        await factory.SeedAsync(context =>
-        {
-            AddUser(context, "other-user", "Other User", OtherUserId);
-            var category = AddCategory(context, "Work", TodoApiFactory.TestUserId);
-            var firstList = AddList(context, "Sprint", TodoApiFactory.TestUserId, category.Id);
-            var secondList = AddList(context, "Inbox", TodoApiFactory.TestUserId, category.Id, archived: true);
-            AddItem(context, "Urgent sprint", firstList.Id, TodoApiFactory.TestUserId, sortIndex: 1);
-            AddItem(context, "Urgent inbox", secondList.Id, TodoApiFactory.TestUserId, isCompleted: true, sortIndex: 2);
-            AddItem(context, "Other urgent", firstList.Id, OtherUserId, sortIndex: 3);
-            return Task.CompletedTask;
-        });
-        using var client = factory.CreateApiClient();
-
-        var response = await client.GetAsync("/api/listitems?text=Urgent&orderBy.field=customSort&orderBy.ascending=false");
-
-        response.EnsureSuccessStatusCode();
-        using var json = await ReadJsonAsync(response);
-        Assert.Equal(2, GetInt32(json.RootElement, "totalCount"));
-        var items = GetProperty(json.RootElement, "items").EnumerateArray().ToList();
-        Assert.Equal(["Urgent inbox", "Urgent sprint"], items.Select(item => GetString(item, "name")).ToList());
-        Assert.True(GetBoolean(items[0], "completed"));
-        Assert.True(GetBoolean(items[0], "archived"));
-    }
 }

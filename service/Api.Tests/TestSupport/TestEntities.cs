@@ -36,8 +36,9 @@ public static class TestEntities
         TodoDatabaseContext context,
         string name,
         Guid ownerId,
-        Guid categoryId,
+        Guid? categoryId,
         bool archived = false,
+        bool isCompleted = false,
         DateTime? createdOn = null)
     {
         var list = new ListEntity
@@ -46,6 +47,7 @@ public static class TestEntities
             OwnerId = ownerId,
             CategoryId = categoryId,
             Archived = archived,
+            IsCompleted = isCompleted,
             CreatedOn = createdOn ?? DateTime.UtcNow,
             UpdatedOn = DateTime.UtcNow
         };

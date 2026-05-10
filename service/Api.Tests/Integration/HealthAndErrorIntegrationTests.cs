@@ -24,7 +24,7 @@ public class HealthAndErrorIntegrationTests : IntegrationTestBase
         using var client = factory.CreateApiClient();
         client.DefaultRequestHeaders.Add(CorrelationMiddleware.HeaderName, "integration-correlation");
 
-        var response = await client.GetAsync($"/api/category/{Guid.NewGuid()}");
+        var response = await client.GetAsync($"/api/list/{Guid.NewGuid()}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Equal("integration-correlation", response.Headers.GetValues(CorrelationMiddleware.HeaderName).Single());
