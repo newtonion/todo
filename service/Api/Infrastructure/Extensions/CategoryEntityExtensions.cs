@@ -19,6 +19,6 @@ public static class CategoryEntityExtensions
     {
         if (string.IsNullOrEmpty(nameCriteria))
             return query;
-        return query.Where(c => c.Name.Contains(nameCriteria));
+        return query.Where(c => c.Name.ToUpper().Contains(nameCriteria.ToUpper()));
     }
 }

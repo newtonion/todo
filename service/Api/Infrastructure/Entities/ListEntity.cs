@@ -13,7 +13,7 @@ public class ListEntity : MutableEntity
     public bool Archived { get; set; } = false;
     public bool IsCompleted { get; set; }
     [ForeignKey("Category")]
-    public Guid CategoryId { get; set; }
+    public Guid? CategoryId { get; set; }
     [ForeignKey("Owner")]
     public Guid OwnerId { get; set; }
     
@@ -22,14 +22,14 @@ public class ListEntity : MutableEntity
     
     // Navigation properties
     public virtual List<ListItemEntity> Children { get; set; } = new() ;
-    public virtual CategoryEntity Category {get; set;} = null!;
+    public virtual CategoryEntity? Category {get; set;} = null!;
     public virtual UserEntity Owner {get; set;} = null!;
 
     // Mappings for sorting
     public static readonly Dictionary<string, Expression<Func<ListEntity, object>>> SortMappings =
     new()
     {
-        ["category"] = x => x.Category.Name,
+        ["category"] = x => x.Category != null ? x.Category.Name : string.Empty,
         ["createdOn"] = x => x.CreatedOn,
         ["completed"] = x => x.IsCompleted,
         ["archived"] = x => x.Archived,

@@ -73,6 +73,24 @@ public class UserContextMiddlewareTests
     }
 
     [Fact]
+    public async Task InvokeAsync_WhenJwtHandlerMapsSubClaimToNameIdentifier_StoresResolvedUserId()
+    {
+        var context = new DefaultHttpContext
+        {
+            User = CreatePrincipal((ClaimTypes.NameIdentifier, "clerk-user-123"), (ClaimTypes.Name, "Clerk User"))
+        };
+        var middleware = new UserContextMiddleware(_ => Task.CompletedTask, NullLogger<UserContextMiddleware>.Instance);
+        var userService = new Mock<IUserService>();
+        userService
+            .Setup(s => s.GetOrCreateUserAsync("clerk-user-123", "Clerk User", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ClerkUserId);
+
+        await middleware.InvokeAsync(context, userService.Object, CreateConfiguration(("Authentication:UseClerk", "true")));
+
+        Assert.Equal(ClerkUserId, context.Items[UserContextMiddleware.UserIdKey]);
+    }
+
+    [Fact]
     public async Task InvokeAsync_WhenNameClaimIsMissing_UsesPreferredUsername()
     {
         var context = new DefaultHttpContext

@@ -11,13 +11,14 @@ namespace Api.Services;
 
 public interface IListService
 {
-    public Task<Guid> CreateAsync(Guid userId, string name, Guid categoryId, CancellationToken cancellationToken = default);
+    public Task<Guid> CreateAsync(Guid userId, string name, Guid? categoryId, CancellationToken cancellationToken = default);
     public Task RenameAsync(Guid userId, Guid listId, string name, CancellationToken cancellationToken = default);
-    public Task CloseAsync(Guid userId, Guid listId, CancellationToken cancellationToken = default);
-    public Task OpenAsync(Guid userId, Guid listId, CancellationToken cancellationToken = default);
-    public Task DeleteAsync(Guid userId, Guid listId, CancellationToken cancellationToken = default);
+    public Task ToggleCompleteAsync(Guid userId, Guid listId, CancellationToken cancellationToken = default);
+    public Task ToggleArchiveAsync(Guid userId, Guid listId, CancellationToken cancellationToken = default);
     public Task<SearchResultsResponseModel<ListSearchResult>> SearchAsync(Guid userId, ListSearchCriteria searchCriteria, CancellationToken cancellationToken = default);
     public Task<ListGetResult> GetAsync(Guid userId, Guid listId, CancellationToken cancellationToken = default);
+    public Task SetCategoryAsync(Guid userId, Guid listId, Guid? categoryId, CancellationToken cancellationToken = default);
+    public Task<ListCountResult> GetCountsAsync(Guid userId, Guid listId, CancellationToken cancellationToken = default);
 }
 
 
@@ -42,12 +43,12 @@ public class ListService : IListService
         _logger = logger;
     }
 
-    public async Task<Guid> CreateAsync(Guid userId, string name, Guid categoryId, CancellationToken cancellationToken = default)
+    public async Task<Guid> CreateAsync(Guid userId, string name, Guid? categoryId, CancellationToken cancellationToken = default)
     {
         await using var _dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         
-        // Verify category exists and user has access
-        var categoryExists = await _dbContext.Categories
+        // if no category we don't care if it exists, otherwise check if category exists and can be used
+        var categoryExists = !categoryId.HasValue? true : await _dbContext.Categories
             .WhereCurrentUserHasAccess(userId)
             .AnyAsync(c => c.Id == categoryId, cancellationToken);
         
@@ -96,7 +97,7 @@ public class ListService : IListService
         _logger.LogInformation("Renamed list {ListId} to '{Name}' for user {UserId}", listId, name, userId);
     }
 
-    public async Task CloseAsync(Guid userId, Guid listId, CancellationToken cancellationToken = default)
+    public async Task ToggleCompleteAsync(Guid userId, Guid listId, CancellationToken cancellationToken = default)
     {
         await using var _dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         var list = await _dbContext.Lists
@@ -108,15 +109,14 @@ public class ListService : IListService
             throw new NotFoundException();
         }
 
-        list.Archived = true;
+        list.IsCompleted = !list.IsCompleted;
         list.UpdatedOn = DateTime.UtcNow;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("Archived list {ListId} for user {UserId}", listId, userId);
+        _logger.LogInformation("Toggled completion status of list {ListId} for user {UserId}", listId, userId);
     }
-
-    public async Task OpenAsync(Guid userId, Guid listId, CancellationToken cancellationToken = default)
+    public async Task ToggleArchiveAsync(Guid userId, Guid listId, CancellationToken cancellationToken = default)
     {
         await using var _dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         var list = await _dbContext.Lists
@@ -128,15 +128,15 @@ public class ListService : IListService
             throw new NotFoundException();
         }
 
-        list.Archived = false;
+        list.Archived = !list.Archived;
         list.UpdatedOn = DateTime.UtcNow;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("Unarchived list {ListId} for user {UserId}", listId, userId);
+        _logger.LogInformation("Toggled archive status of list {ListId} for user {UserId}", listId, userId);
     }
 
-    public async Task DeleteAsync(Guid userId, Guid listId, CancellationToken cancellationToken = default)
+    public async Task SetCategoryAsync(Guid userId, Guid listId, Guid? categoryId, CancellationToken cancellationToken = default)
     {
         await using var _dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         var list = await _dbContext.Lists
@@ -148,10 +148,21 @@ public class ListService : IListService
             throw new NotFoundException();
         }
 
-        _dbContext.Lists.Remove(list);
+        var categoryExists = !categoryId.HasValue? true : await _dbContext.Categories
+            .WhereCurrentUserHasAccess(userId)
+            .AnyAsync(c => c.Id == categoryId, cancellationToken);
+
+        if (!categoryExists)
+        {
+            throw new NotFoundException();
+        }
+
+        list.CategoryId = categoryId;
+        list.UpdatedOn = DateTime.UtcNow;
+
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("Deleted list {ListId} for user {UserId}", listId, userId);
+        _logger.LogInformation("Set category of list {ListId} to {CategoryId} for user {UserId}", listId, categoryId, userId);
     }
 
     public async Task<SearchResultsResponseModel<ListSearchResult>> SearchAsync(Guid userId, ListSearchCriteria searchCriteria, CancellationToken cancellationToken = default)
@@ -175,7 +186,8 @@ public class ListService : IListService
             {
                 Id = l.Id,
                 Name = l.Name,
-                CategoryName = l.Category.Name,
+                CategoryName = l.Category != null ? l.Category.Name : string.Empty,
+                IsCompleted = l.IsCompleted,
                 Archived = l.Archived,
                 TotalItems = l.Children.Count,
                 CompletedItems = l.Children.Count(c => c.IsCompleted)
@@ -196,7 +208,6 @@ public class ListService : IListService
         await using var _dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         var list = await _dbContext.Lists
             .Include(l => l.Category)
-            .Include(l => l.Children)
             .WhereCurrentUserHasAccess(userId)
             .Where(l => l.Id == listId)
             .FirstOrDefaultAsync(cancellationToken);
@@ -210,18 +221,33 @@ public class ListService : IListService
         {
             Id = list.Id,
             Name = list.Name,
-            Category = list.Category.Name,
+            Category = list.Category?.Name ?? string.Empty,
+            CategoryId = list.CategoryId,
             Archived = list.Archived,
-            TotalItems = list.Children.Count,
-            CompletedItems = list.Children.Count(c => c.IsCompleted),
-            Items = list.Children.Select(c => new ListItemSearchResult
-            {
-                Id = c.Id,
-                Name = c.Name,
-                Category = list.Category.Name,
-                Completed = c.IsCompleted,
-                Archived = false
-            }).ToList()
+            Completed = list.IsCompleted,
+            TotalItems = list.Children?.Count ?? 0,
+            CompletedItems = list.Children?.Count(c => c.IsCompleted) ?? 0
         };
+    }
+
+    public async Task<ListCountResult> GetCountsAsync(Guid userId, Guid listId, CancellationToken cancellationToken = default)
+    {
+        await using var _dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var counts = await _dbContext.Lists
+            .WhereCurrentUserHasAccess(userId)
+            .Where(l => l.Id == listId)
+            .Select(l => new ListCountResult
+            {
+                TotalItems = _dbContext.ListItems.WhereCurrentUserHasAccess(userId).Count(i => i.ParentId == l.Id),
+                CompletedItems = _dbContext.ListItems.WhereCurrentUserHasAccess(userId).Count(i => i.ParentId == l.Id && i.IsCompleted)
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (counts == null)
+        {
+            throw new NotFoundException();
+        }
+
+        return counts;
     }
 }

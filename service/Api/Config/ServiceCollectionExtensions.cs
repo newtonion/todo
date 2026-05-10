@@ -5,6 +5,7 @@ using Api.Validators;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 
 namespace Api.Config;
@@ -37,32 +38,39 @@ public static class ServiceCollectionExtensions
                 .AddJwtBearer(options =>
                 {
                     options.Authority = configuration["Clerk:Authority"];
-                    options.Audience = configuration["Clerk:Audience"];
-                    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                    options.MapInboundClaims = false;
+                    options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuer = true,
-                        ValidateAudience = true,
+                        ValidateAudience = false,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true
+                    };
+
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnTokenValidated = context =>
+                        {
+                            var allowedOrigins = configuration
+                                .GetSection("Cors:AllowedOrigins")
+                                .Get<string[]>() ?? [];
+
+                            var authorizedParty = context.Principal?.FindFirst("azp")?.Value;
+
+                            if (!string.IsNullOrEmpty(authorizedParty) &&
+                                allowedOrigins.Length > 0 &&
+                                !allowedOrigins.Contains(authorizedParty, StringComparer.OrdinalIgnoreCase))
+                            {
+                                context.Fail($"Invalid authorized party: {authorizedParty}");
+                            }
+
+                            return Task.CompletedTask;
+                        }
                     };
                 });
         }
         else
         {
-            // Development mode - minimal authentication for testing - requires JWT tokens with any content, no validation
-            /*services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.RequireHttpsMetadata = false;
-                    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-                    {
-                        ValidateIssuer = false,
-                        ValidateAudience = false,
-                        ValidateLifetime = false,
-                        ValidateIssuerSigningKey = false
-                    };
-                });
-            */
 
         services.AddAuthentication("DevAuth")
             .AddScheme<AuthenticationSchemeOptions, DevAuthHandler>("DevAuth", null);

@@ -14,8 +14,6 @@ public interface IListItemService
 {
     public Task<Guid> CreateAsync(Guid userId, Guid listId, string name, DateTime? dueDate, CancellationToken cancellationToken = default);
 
-    public Task CreateBatchAsync(Guid userId, Guid listId, IEnumerable<(string name, DateTime? dueDate)> items, CancellationToken cancellationToken = default);
-
     public Task<SearchResultsResponseModel<ListItemSearchResult>> SearchAsync(Guid userId, ListItemSearchCriteria criteria, CancellationToken cancellationToken = default);
 
     public Task<ListItemGetResult> GetAsync(Guid userId, Guid itemId, CancellationToken cancellationToken = default);
@@ -23,8 +21,6 @@ public interface IListItemService
     public Task RenameAsync(Guid userId, Guid itemId, string name, CancellationToken cancellationToken = default);
 
     public Task SetDueDateAsync(Guid userId, Guid itemId, DateTime? dueDate, CancellationToken cancellationToken = default);
-
-    public Task SetSortIndexAsync(Guid userId, Guid itemId, int sortIndex, CancellationToken cancellationToken = default);
 
     public Task DeleteAsync(Guid userId, Guid itemId, CancellationToken cancellationToken = default);
 
@@ -139,9 +135,8 @@ public class ListItemService : IListItemService
             {
                 Id = li.Id,
                 Name = li.Name,
-                Category = li.Parent.Category.Name,
                 Completed = li.IsCompleted,
-                Archived = li.Parent.Archived
+                DueDate = li.DueDate,
             })
             .ToListAsync(cancellationToken);
 
@@ -170,7 +165,7 @@ public class ListItemService : IListItemService
                 SortIndex = li.SortIndex,
                 ParentId = li.ParentId,
                 ParentName = li.Parent.Name,
-                CategoryName = li.Parent.Category.Name,
+                CategoryName = li.Parent.Category != null ? li.Parent.Category.Name : string.Empty,
                 CreatedOn = li.CreatedOn,
                 UpdatedOn = li.UpdatedOn
             })
@@ -225,27 +220,6 @@ public class ListItemService : IListItemService
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("Set due date for list item {ItemId} to {DueDate} for user {UserId}", itemId, dueDate, userId);
-    }
-
-    public async Task SetSortIndexAsync(Guid userId, Guid itemId, int sortIndex, CancellationToken cancellationToken = default)
-    {
-        await using var _dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
-        
-        var item = await _dbContext.ListItems
-            .WhereCurrentUserHasAccess(userId)
-            .FirstOrDefaultAsync(li => li.Id == itemId, cancellationToken);
-        
-        if (item == null)
-        {
-            throw new NotFoundException($"List item {itemId} not found or access denied");
-        }
-
-        item.SortIndex = sortIndex;
-        item.UpdatedOn = DateTime.UtcNow;
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
-
-        _logger.LogInformation("Set sort index for list item {ItemId} to {SortIndex} for user {UserId}", itemId, sortIndex, userId);
     }
 
     public async Task DeleteAsync(Guid userId, Guid itemId, CancellationToken cancellationToken = default)

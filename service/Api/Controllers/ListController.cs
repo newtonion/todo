@@ -54,14 +54,31 @@ namespace Api.Controllers
         }
 
         /// <summary>
+        /// Gets counts for a list including total items and completed items
+        /// </summary>
+        /// <param name="id">The list ID</param>
+        /// <returns>Item counts for the list</returns>
+        /// <response code="200">Returns the list counts</response>
+        /// <response code="404">If the list is not found</response>
+        [HttpGet("{id}/counts")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetCounts(Guid id)
+        {
+            var userId = GetUserId();
+            var result = await _listService.GetCountsAsync(userId, id);
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Searches lists with optional filters
         /// </summary>
         /// <param name="criteria">Search criteria including text filter, archived status, and pagination</param>
         /// <returns>Paginated list of lists</returns>
         /// <response code="200">Returns the search results</response>
-        [HttpGet]
+        [HttpPost("search")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> Search([FromQuery] ListSearchCriteria criteria)
+        public async Task<IActionResult> Search([FromBody] ListSearchCriteria criteria)
         {
             var userId = GetUserId();
             var results = await _listService.SearchAsync(userId, criteria);
@@ -80,7 +97,7 @@ namespace Api.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> Rename(Guid id, [FromBody] UpdateListRequest request)
+        public async Task<IActionResult> Rename(Guid id, [FromBody] RenameListRequest request)
         {
             var userId = GetUserId();
             await _listService.RenameAsync(userId, id, request.Name);
@@ -88,53 +105,52 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Archives a list (marks as closed)
+        /// Toggles the completion status of a list
+        /// </summary>
+        /// <param name="id">The list ID</param>
+        /// <response code="204">List completion status toggled successfully</response>
+        /// <response code="404">If the list is not found</response>
+        [HttpPost("{id}/complete")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> ToggleComplete(Guid id)
+        {
+            var userId = GetUserId();
+            await _listService.ToggleCompleteAsync(userId, id);
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Archives a list and all its items
         /// </summary>
         /// <param name="id">The list ID</param>
         /// <response code="204">List archived successfully</response>
         /// <response code="404">If the list is not found</response>
-        [HttpPost("{id}/close")]
+        [HttpPost("{id}/archive")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Close(Guid id)
+        public async Task<IActionResult> ToggleArchive(Guid id)
         {
             var userId = GetUserId();
-            await _listService.CloseAsync(userId, id);
+            await _listService.ToggleArchiveAsync(userId, id);
             return NoContent();
         }
 
         /// <summary>
-        /// Unarchives a list (marks as open)
+        /// Updates the category of a list
         /// </summary>
         /// <param name="id">The list ID</param>
-        /// <response code="204">List unarchived successfully</response>
-        /// <response code="404">If the list is not found</response>
-        [HttpPost("{id}/open")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Open(Guid id)
-        {
-            var userId = GetUserId();
-            await _listService.OpenAsync(userId, id);
-            return NoContent();
-        }
+        /// <param name="request">Updated list category data</param>
+        /// <response code="204">List category updated successfully</response>
+        /// <response code="404">If the list or category (if provided) is not found</response>
 
-        /// <summary>
-        /// Deletes a list and all its items
-        /// </summary>
-        /// <param name="id">The list ID</param>
-        /// <response code="204">List deleted successfully</response>
-        /// <response code="404">If the list is not found</response>
-        /// <remarks>
-        /// Warning: This will cascade delete all items in the list
-        /// </remarks>
-        [HttpDelete("{id}")]
+        [HttpPost("{id}/category")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Delete(Guid id)
+        public async Task<IActionResult> SetCategory(Guid id, [FromBody] UpdateListCategoryRequest request)
         {
             var userId = GetUserId();
-            await _listService.DeleteAsync(userId, id);
+            await _listService.SetCategoryAsync(userId, id, request.Category);
             return NoContent();
         }
     }

@@ -1,5 +1,6 @@
 using Api.Infrastructure;
 using Api.Infrastructure.Entities;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Data.Sqlite;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -35,6 +36,14 @@ public sealed class TodoApiFactory : WebApplicationFactory<Program>
         {
             services.RemoveAll<IDbContextFactory<TodoDatabaseContext>>();
             services.RemoveAll<DbContextOptions<TodoDatabaseContext>>();
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = "TestAuth";
+                    options.DefaultChallengeScheme = "TestAuth";
+                    options.DefaultScheme = "TestAuth";
+                })
+                .AddScheme<AuthenticationSchemeOptions, DevAuthHandler>("TestAuth", null);
 
             _connection.Open();
 

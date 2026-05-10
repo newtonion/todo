@@ -4,7 +4,10 @@ namespace Api.Models.Requests;
 
 public class ListSearchCriteria()
 {
+    [StringLength(300, ErrorMessage = "Text cannot be longer than 300 characters")]
     public string? Text { get; set; }
+    [StringLength(300, ErrorMessage = "CategoryText cannot be longer than 300 characters")]
+    public string? CategoryText { get; set; }
     
     public FieldOrderRequest? OrderBy { get; set; }
     
@@ -15,5 +18,6 @@ public class ListSearchCriteria()
     public int? Offset { get; set; }
     
     public bool? IncludeArchived { get; set; }
-}
 
+    public bool? IncludeCompleted { get; set; }
+}

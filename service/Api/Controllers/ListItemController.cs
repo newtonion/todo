@@ -109,23 +109,6 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Updates the sort index for an item (for reordering)
-        /// </summary>
-        /// <param name="itemId">The item ID</param>
-        /// <param name="request">The new sort index</param>
-        /// <response code="204">Sort index updated successfully</response>
-        /// <response code="404">If the item is not found</response>
-        [HttpPost("{itemId}/reorder")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Reorder(Guid itemId, [FromBody] SetListItemSortIndexRequest request)
-        {
-            var userId = GetUserId();
-            await _listItemService.SetSortIndexAsync(userId, itemId, request.SortIndex);
-            return NoContent();
-        }
-
-        /// <summary>
         /// Deletes an item
         /// </summary>
         /// <param name="itemId">The item ID</param>

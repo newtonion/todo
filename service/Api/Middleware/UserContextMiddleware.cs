@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Api.Services;
 
 namespace Api.Middleware;
@@ -34,7 +35,8 @@ public class UserContextMiddleware
         else if (context.User.Identity?.IsAuthenticated == true)
         {
             // Clerk authentication - get sub claim and lookup/create user
-            var clerkUserId = context.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+            var clerkUserId = context.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value
+                ?? context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             
             if (string.IsNullOrEmpty(clerkUserId))
             {
@@ -43,7 +45,8 @@ public class UserContextMiddleware
                 return;
             }
 
-            var userName = context.User.Claims.FirstOrDefault(c => c.Type == "name")?.Value 
+            var userName = context.User.Claims.FirstOrDefault(c => c.Type == "name")?.Value
+                ?? context.User.FindFirst(ClaimTypes.Name)?.Value
                 ?? context.User.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value
                 ?? "Unknown User";
 

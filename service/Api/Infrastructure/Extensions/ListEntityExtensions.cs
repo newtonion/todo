@@ -16,14 +16,23 @@ public static class ListEntityExtensions
         return query
             .WhereCurrentUserHasAccess(userId)
             .WhereName(searchCriteria.Text)
-            .WhereArchived(searchCriteria.IncludeArchived);
+            .WhereCategoryText(searchCriteria.CategoryText)
+            .WhereArchived(searchCriteria.IncludeArchived)
+            .WhereCompleted(searchCriteria.IncludeCompleted);
     }
 
     public static IQueryable<ListEntity> WhereName(this IQueryable<ListEntity> query, string? nameCriteria)
     {
         if (string.IsNullOrEmpty(nameCriteria))
             return query;
-        return query.Where(l => l.Name.Contains(nameCriteria));
+        return query.Where(l => l.Name.ToLower().Contains(nameCriteria.ToLower()));
+    }
+
+    public static IQueryable<ListEntity> WhereCategoryText(this IQueryable<ListEntity> query, string? categoryTextCriteria)
+    {
+        if (string.IsNullOrEmpty(categoryTextCriteria))
+            return query;
+        return query.Where(l => l.Category != null && l.Category.Name.ToLower().Contains(categoryTextCriteria.ToLower()));
     }
 
     public static IQueryable<ListEntity> WhereArchived(this IQueryable<ListEntity> query, bool? includeArchived)
@@ -31,5 +40,12 @@ public static class ListEntityExtensions
         if (includeArchived == true)
             return query;
         return query.Where(l => !l.Archived);
+    }
+
+    public static IQueryable<ListEntity> WhereCompleted(this IQueryable<ListEntity> query, bool? includeCompleted)
+    {
+        if (includeCompleted == true)
+            return query;
+        return query.Where(l => !l.IsCompleted);
     }
 }
