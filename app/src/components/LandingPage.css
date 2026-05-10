@@ -1,0 +1,76 @@
+.landing-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 50%, #ddd6fe 100%);
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.landing-content {
+  text-align: center;
+  max-width: 500px;
+  padding: 2rem;
+}
+
+.logo-container {
+  margin-bottom: 2rem;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.landing-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #5b21b6;
+  margin-bottom: 1rem;
+}
+
+.landing-subtitle {
+  font-size: 1.2rem;
+  color: #7c3aed;
+  margin-bottom: 3rem;
+  line-height: 1.6;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.landing-auth-button {
+  padding: 0.9rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.landing-signin {
+  background: white;
+  color: #7c3aed;
+  border: 2px solid #7c3aed;
+}
+
+.landing-signin:hover {
+  background: #f3e8ff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.25);
+}
+
+.landing-signup {
+  background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+  color: white;
+}
+
+.landing-signup:hover {
+  background: linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(124, 58, 237, 0.4);
+}

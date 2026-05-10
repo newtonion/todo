@@ -1,0 +1,59 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">ToDuelip favicon</title>
+  <desc id="desc">A simplified purple tulip favicon with a hidden checkmark in the petals.</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="96" y1="64" x2="416" y2="448" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#D8A8FF"/>
+      <stop offset="0.48" stop-color="#9B3FEA"/>
+      <stop offset="1" stop-color="#5B16B8"/>
+    </linearGradient>
+
+    <linearGradient id="petalLeft" x1="145" y1="145" x2="277" y2="357" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E9BEFF"/>
+      <stop offset="1" stop-color="#8E35DB"/>
+    </linearGradient>
+
+    <linearGradient id="petalRight" x1="255" y1="148" x2="370" y2="348" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#A54BEE"/>
+      <stop offset="1" stop-color="#6819C1"/>
+    </linearGradient>
+
+    <linearGradient id="petalTop" x1="256" y1="79" x2="256" y2="171" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E5B6FF"/>
+      <stop offset="1" stop-color="#9B3FEA"/>
+    </linearGradient>
+
+    <linearGradient id="leaf" x1="151" y1="308" x2="366" y2="431" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#DFA9FF"/>
+      <stop offset="1" stop-color="#6F1BC9"/>
+    </linearGradient>
+
+    <filter id="shadow" x="60" y="60" width="392" height="392" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#4B147F" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <rect x="64" y="64" width="384" height="384" rx="88" fill="url(#bg)" filter="url(#shadow)"/>
+
+  <g transform="translate(0 6)">
+    <!-- top petal -->
+    <path d="M256 82C281 106 301 133 313 164C287 165 269 178 256 199C243 178 225 165 199 164C211 133 231 106 256 82Z" fill="url(#petalTop)"/>
+
+    <!-- left petal -->
+    <path d="M163 159C209 155 247 182 268 226C286 265 282 320 249 349C190 335 154 284 158 219C159 196 160 176 163 159Z" fill="url(#petalLeft)"/>
+
+    <!-- right petal -->
+    <path d="M349 159C303 155 265 182 244 226C226 265 230 320 263 349C322 335 358 284 354 219C353 196 352 176 349 159Z" fill="url(#petalRight)"/>
+
+    <!-- hidden checkmark cutout -->
+    <path d="M187 218L231 255C257 209 290 178 331 154C295 193 268 244 249 311C232 276 210 247 187 218Z" fill="#FFFFFF" fill-opacity="0.92"/>
+
+    <!-- stem -->
+    <rect x="248" y="342" width="16" height="91" rx="8" fill="#5F18B8"/>
+
+    <!-- leaves -->
+    <path d="M243 423C203 409 174 379 163 334C204 335 235 361 248 402C249 411 248 418 243 423Z" fill="url(#leaf)"/>
+    <path d="M269 423C309 409 338 379 349 334C308 335 277 361 264 402C263 411 264 418 269 423Z" fill="url(#leaf)"/>
+  </g>
+</svg>
