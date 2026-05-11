@@ -7,7 +7,7 @@ namespace Api.Services;
 
 public interface IUserService
 {
-    Task<Guid> GetOrCreateUserAsync(string authId, string name, CancellationToken cancellationToken = default);
+    Task<Guid> GetOrCreateUserAsync(string authId, CancellationToken cancellationToken = default);
 }
 
 public class UserService : IUserService
@@ -23,7 +23,7 @@ public class UserService : IUserService
         _logger = logger;
     }
 
-    public async Task<Guid> GetOrCreateUserAsync(string authId, string name, CancellationToken cancellationToken = default)
+    public async Task<Guid> GetOrCreateUserAsync(string authId, CancellationToken cancellationToken = default)
     {
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
 
@@ -40,7 +40,7 @@ public class UserService : IUserService
         var newUser = new UserEntity
         {
             AuthId = authId,
-            Name = name
+            Name = "Unknown User" // Placeholder. This could be enhanced with a webhook, but Clerk gives the username to the front end where we need it.
         };
 
         dbContext.Users.Add(newUser);

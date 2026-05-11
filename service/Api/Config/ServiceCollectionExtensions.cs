@@ -30,51 +30,40 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IEntityValidator<CategoryEntity>, CategoryEntityValidator>();
 
         // Authentication
-        var useClerk = configuration.GetValue<bool>("Authentication:UseClerk", true);
-
-        if (useClerk)
-        {
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.Authority = configuration["Clerk:Authority"];
+                options.MapInboundClaims = false;
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    options.Authority = configuration["Clerk:Authority"];
-                    options.MapInboundClaims = false;
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = true,
-                        ValidateAudience = false,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true
-                    };
+                    ValidateIssuer = true,
+                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true
+                };
 
-                    options.Events = new JwtBearerEvents
+                options.Events = new JwtBearerEvents
+                {
+                    OnTokenValidated = context =>
                     {
-                        OnTokenValidated = context =>
+                        var allowedOrigins = configuration
+                            .GetSection("Cors:AllowedOrigins")
+                            .Get<string[]>() ?? [];
+
+                        var authorizedParty = context.Principal?.FindFirst("azp")?.Value;
+
+                        if (!string.IsNullOrEmpty(authorizedParty) &&
+                            allowedOrigins.Length > 0 &&
+                            !allowedOrigins.Contains(authorizedParty, StringComparer.OrdinalIgnoreCase))
                         {
-                            var allowedOrigins = configuration
-                                .GetSection("Cors:AllowedOrigins")
-                                .Get<string[]>() ?? [];
-
-                            var authorizedParty = context.Principal?.FindFirst("azp")?.Value;
-
-                            if (!string.IsNullOrEmpty(authorizedParty) &&
-                                allowedOrigins.Length > 0 &&
-                                !allowedOrigins.Contains(authorizedParty, StringComparer.OrdinalIgnoreCase))
-                            {
-                                context.Fail($"Invalid authorized party: {authorizedParty}");
-                            }
-
-                            return Task.CompletedTask;
+                            context.Fail($"Invalid authorized party: {authorizedParty}");
                         }
-                    };
-                });
-        }
-        else
-        {
 
-        services.AddAuthentication("DevAuth")
-            .AddScheme<AuthenticationSchemeOptions, DevAuthHandler>("DevAuth", null);
-        }
+                        return Task.CompletedTask;
+                    }
+                };
+            });
 
         services.AddAuthorization();
 

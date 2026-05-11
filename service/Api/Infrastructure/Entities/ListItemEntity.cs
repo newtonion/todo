@@ -30,6 +30,7 @@ public class ListItemEntity: MutableEntity
     public static readonly Dictionary<string, Expression<Func<ListItemEntity, object>>> SortMappings =
     new()
     {
+        ["id"] = x => x.Id,
         ["dueDate"] = x => x.DueDate ?? DateTime.MaxValue,
         ["completed"] = x => x.IsCompleted,
         ["customSort"] = x => x.SortIndex,

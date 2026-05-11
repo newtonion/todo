@@ -26,9 +26,11 @@ public sealed class TodoApiFactory : WebApplicationFactory<Program>
         {
             configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Authentication:UseClerk"] = "false",
                 ["Authentication:TestUserId"] = TestUserId.ToString(),
-                ["Cors:AllowedOrigins:0"] = "https://localhost"
+                ["Cors:AllowedOrigins:0"] = "https://localhost",
+                ["Logging:LogLevel:Default"] = "Warning",
+                ["Logging:LogLevel:Api.Middleware.ExceptionHandlingMiddleware"] = "None",
+                ["Logging:LogLevel:Microsoft.EntityFrameworkCore.Query"] = "Error"
             });
         });
 

@@ -29,6 +29,7 @@ public class ListEntity : MutableEntity
     public static readonly Dictionary<string, Expression<Func<ListEntity, object>>> SortMappings =
     new()
     {
+        ["id"] = x => x.Id,
         ["category"] = x => x.Category != null ? x.Category.Name : string.Empty,
         ["createdOn"] = x => x.CreatedOn,
         ["completed"] = x => x.IsCompleted,

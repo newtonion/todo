@@ -90,7 +90,7 @@ public class ListItemService : IListItemService
 
         var orderBy = criteria.OrderBy != null 
             ? new[] { criteria.OrderBy } 
-            : Array.Empty<FieldOrderRequest>();
+            : new[] { new FieldOrderRequest { Field = "id", Ascending = true } };
 
         var results = await query
             .SortEntity(orderBy, ListItemEntity.SortMappings)

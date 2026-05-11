@@ -18,7 +18,7 @@ public class UserServiceTests
         await context.SaveChangesAsync();
         var service = CreateService(database);
 
-        var userId = await service.GetOrCreateUserAsync("auth-123", "Updated Name");
+        var userId = await service.GetOrCreateUserAsync("auth-123");
 
         Assert.Equal(existingUser.Id, userId);
     }
@@ -32,13 +32,12 @@ public class UserServiceTests
         await context.SaveChangesAsync();
         var service = CreateService(database);
 
-        await service.GetOrCreateUserAsync("auth-123", "Updated Name");
+        await service.GetOrCreateUserAsync("auth-123");
 
         context.ChangeTracker.Clear();
         var users = await context.Users.ToListAsync();
         var user = Assert.Single(users);
         Assert.Equal(existingUser.Id, user.Id);
-        Assert.Equal("Existing User", user.Name);
     }
 
     [Fact]
@@ -48,11 +47,10 @@ public class UserServiceTests
         await using var context = database.CreateContext();
         var service = CreateService(database);
 
-        var userId = await service.GetOrCreateUserAsync("auth-456", "New User");
+        var userId = await service.GetOrCreateUserAsync("auth-456");
 
         var user = await context.Users.SingleAsync(u => u.Id == userId);
         Assert.Equal("auth-456", user.AuthId);
-        Assert.Equal("New User", user.Name);
     }
 
     [Fact]
@@ -64,11 +62,11 @@ public class UserServiceTests
         await context.SaveChangesAsync();
         var service = CreateService(database);
 
-        var newUserId = await service.GetOrCreateUserAsync("auth-456", "New User");
+        var newUserId = await service.GetOrCreateUserAsync("auth-456");
 
         Assert.NotEqual(existingUser.Id, newUserId);
         Assert.Equal(2, await context.Users.CountAsync());
-        Assert.NotNull(await context.Users.SingleOrDefaultAsync(u => u.AuthId == "auth-456" && u.Name == "New User"));
+        Assert.NotNull(await context.Users.SingleOrDefaultAsync(u => u.AuthId == "auth-456"));
     }
 
     private static UserService CreateService(TestDatabase database)

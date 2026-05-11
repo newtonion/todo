@@ -18,21 +18,9 @@ public class UserContextMiddleware
         _logger = logger;
     }
 
-    public async Task InvokeAsync(HttpContext context, IUserService userService, IConfiguration configuration)
+    public async Task InvokeAsync(HttpContext context, IUserService userService)
     {
-        var useClerk = configuration.GetValue<bool>("Authentication:UseClerk", true);
-
-        Guid userId;
-
-        if (!useClerk)
-        {
-            // Development mode - use test user without requiring authentication
-            var testUserId = configuration.GetValue<string>("Authentication:TestUserId");
-            userId = Guid.Parse(testUserId ?? "00000000-0000-0000-0000-000000000001");
-            context.Items[UserIdKey] = userId;
-            _logger.LogInformation("Development mode: Using test user ID {UserId}", userId);
-        }
-        else if (context.User.Identity?.IsAuthenticated == true)
+        if (context.User.Identity?.IsAuthenticated == true)
         {
             // Clerk authentication - get sub claim and lookup/create user
             var clerkUserId = context.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value
@@ -45,13 +33,8 @@ public class UserContextMiddleware
                 return;
             }
 
-            var userName = context.User.Claims.FirstOrDefault(c => c.Type == "name")?.Value
-                ?? context.User.FindFirst(ClaimTypes.Name)?.Value
-                ?? context.User.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value
-                ?? "Unknown User";
-
             // Lazy create/lookup user
-            userId = await userService.GetOrCreateUserAsync(clerkUserId, userName);
+            var userId = await userService.GetOrCreateUserAsync(clerkUserId);
             
             // Store user ID in HttpContext for controllers to access
             context.Items[UserIdKey] = userId;

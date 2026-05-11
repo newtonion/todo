@@ -176,7 +176,7 @@ public class ListService : IListService
 
         var orderBy = searchCriteria.OrderBy != null 
             ? new[] { searchCriteria.OrderBy } 
-            : Array.Empty<FieldOrderRequest>();
+            : new[] { new FieldOrderRequest { Field = "id", Ascending = true } };
 
         var results = await query
             .SortEntity(orderBy, ListEntity.SortMappings)
