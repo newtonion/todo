@@ -20,4 +20,6 @@ public class ListSearchCriteria()
     public bool? IncludeArchived { get; set; }
 
     public bool? IncludeCompleted { get; set; }
+    
+    public bool? OnlyUpcomingOrOverdue { get; set; }
 }

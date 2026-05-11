@@ -189,8 +189,11 @@ public class ListService : IListService
                 CategoryName = l.Category != null ? l.Category.Name : string.Empty,
                 IsCompleted = l.IsCompleted,
                 Archived = l.Archived,
-                TotalItems = l.Children.Count,
-                CompletedItems = l.Children.Count(c => c.IsCompleted)
+                SoonestDueDate = _dbContext.ListItems
+                    .Where(i => i.ParentId == l.Id && i.DueDate != null && !i.IsCompleted)
+                    .OrderBy(i => i.DueDate)
+                    .Select(i => i.DueDate)
+                    .FirstOrDefault() ?? DateTime.MaxValue
             })
             .ToListAsync(cancellationToken);
 

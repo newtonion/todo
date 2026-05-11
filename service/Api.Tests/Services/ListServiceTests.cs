@@ -241,9 +241,10 @@ public class ListServiceTests
         var beta = AddList(context, "Beta project", UserId, homeCategory.Id, createdOn: new DateTime(2024, 1, 3, 0, 0, 0, DateTimeKind.Utc));
         AddList(context, "Closed project", UserId, workCategory.Id, archived: true);
         AddList(context, "Other project", OtherUserId, workCategory.Id);
-        AddItem(context, "Done", alpha.Id, UserId, isCompleted: true);
-        AddItem(context, "Todo", alpha.Id, UserId, isCompleted: false);
-        AddItem(context, "Done too", beta.Id, UserId, isCompleted: true);
+        var betaDueDate = new DateTime(2024, 1, 8, 0, 0, 0, DateTimeKind.Utc);
+        AddItem(context, "Done", alpha.Id, UserId, isCompleted: true, dueDate: new DateTime(2024, 1, 5, 0, 0, 0, DateTimeKind.Utc));
+        AddItem(context, "Todo", alpha.Id, UserId, isCompleted: false, dueDate: new DateTime(2024, 1, 4, 0, 0, 0, DateTimeKind.Utc));
+        AddItem(context, "Done too", beta.Id, UserId, isCompleted: true, dueDate: betaDueDate);
         await context.SaveChangesAsync();
         var service = CreateService(database);
 
@@ -266,8 +267,7 @@ public class ListServiceTests
         Assert.Equal("Beta project", item.Name);
         Assert.Equal("Home", item.CategoryName);
         Assert.False(item.Archived);
-        Assert.Equal(1, item.TotalItems);
-        Assert.Equal(1, item.CompletedItems);
+        Assert.Equal(betaDueDate, item.SoonestDueDate);
         Assert.False(item.IsCompleted);
     }
 

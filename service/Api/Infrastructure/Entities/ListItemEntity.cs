@@ -34,6 +34,9 @@ public class ListItemEntity: MutableEntity
         ["dueDate"] = x => x.DueDate ?? DateTime.MaxValue,
         ["completed"] = x => x.IsCompleted,
         ["customSort"] = x => x.SortIndex,
-        ["name"] = x => x.Name
+        ["name"] = x => x.Name,
+        ["status"] = x => 
+            x.IsCompleted ? 0 : // completed
+                x.DueDate.HasValue && x.DueDate.Value < DateTime.UtcNow ? 1 : 2 // overdue : pending
     };
 }

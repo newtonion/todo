@@ -18,7 +18,8 @@ public static class ListEntityExtensions
             .WhereName(searchCriteria.Text)
             .WhereCategoryText(searchCriteria.CategoryText)
             .WhereArchived(searchCriteria.IncludeArchived)
-            .WhereCompleted(searchCriteria.IncludeCompleted);
+            .WhereCompleted(searchCriteria.IncludeCompleted)
+            .WhereUpcomingOrOverdue(searchCriteria.OnlyUpcomingOrOverdue);
     }
 
     public static IQueryable<ListEntity> WhereName(this IQueryable<ListEntity> query, string? nameCriteria)
@@ -47,5 +48,14 @@ public static class ListEntityExtensions
         if (includeCompleted == true)
             return query;
         return query.Where(l => !l.IsCompleted);
+    }
+
+    public static IQueryable<ListEntity> WhereUpcomingOrOverdue(this IQueryable<ListEntity> query, bool? onlyUpcomingOrOverdue)
+    {
+        if (onlyUpcomingOrOverdue != true)
+            return query;
+
+        var upcomingWindow = DateTime.UtcNow.AddDays(2);
+        return query.Where(l => l.Children.Any(x=> x.DueDate <= upcomingWindow));
     }
 }
