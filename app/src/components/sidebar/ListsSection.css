@@ -20,8 +20,8 @@
   height: 1.35rem;
   padding: 0 0.35rem;
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.85);
-  color: #08060d;
+  background: var(--social-bg);
+  color: var(--text-h);
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1;
@@ -36,10 +36,10 @@
 .list-refresh-button {
   width: 2rem;
   height: 2rem;
-  border: 1px solid rgba(8, 6, 13, 0.12);
+  border: 1px solid var(--border);
   border-radius: var(--radius-pill);
-  background: #fff;
-  color: #08060d;
+  background: var(--bg);
+  color: var(--text-h);
   font-size: 0.9rem;
   cursor: pointer;
   display: flex;
@@ -49,7 +49,7 @@
 
 .list-refresh-button:hover:not(:disabled),
 .list-refresh-button:focus-visible:not(:disabled) {
-  border-color: rgba(8, 6, 13, 0.4);
+  border-color: var(--accent-border);
 }
 
 .list-refresh-button:disabled {

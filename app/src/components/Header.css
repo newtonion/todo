@@ -1,11 +1,12 @@
 .header {
   width: 100%;
+  box-sizing: border-box;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background: #f8f9fa;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  background: #c8acf0;
+  border-bottom: 1px solid var(--frame-border);
   font-size: 1.1rem;
   gap: 1rem;
 }
@@ -21,7 +22,7 @@
   font-size: 0.95rem;
   font-weight: 500;
   border: 2px solid #7c3aed;
-  background: white;
+  background: var(--bg);
   color: #7c3aed;
   border-radius: var(--radius-lg);
   cursor: pointer;
@@ -29,7 +30,7 @@
 }
 
 .auth-button:hover {
-  background: #f3e8ff;
+  background: var(--accent-bg);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
 }

@@ -11,16 +11,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(8, 6, 13, 0.12);
+  border: 1px solid var(--border);
   border-radius: var(--radius-pill);
-  background: #fff;
-  color: #08060d;
+  background: var(--bg);
+  color: var(--text-h);
   cursor: pointer;
 }
 
 .pagination-button:hover:not(:disabled),
 .pagination-button:focus-visible:not(:disabled) {
-  border-color: rgba(8, 6, 13, 0.4);
+  border-color: var(--accent-border);
 }
 
 .pagination-button:disabled {
