@@ -40,6 +40,7 @@ const ListCreateModal = ({ onClose, onCreate }: ListCreateModalProps) => {
               id={id}
               value={value}
               onChange={onChange}
+              showLabel={false}
             />
           ),
         },

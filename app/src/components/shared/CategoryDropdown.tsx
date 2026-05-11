@@ -14,6 +14,7 @@ type CategoryDropdownProps = {
   label?: string;
   loadCategories?: (query: string) => Promise<CategoryOption[]>;
   selectedLabel?: string;
+  showLabel?: boolean;
 };
 
 const CategoryDropdown = ({
@@ -23,6 +24,7 @@ const CategoryDropdown = ({
   label = 'Category',
   loadCategories,
   selectedLabel = '',
+  showLabel = true,
 }: CategoryDropdownProps) => {
   const [search, setSearch] = useState(selectedLabel);
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -113,7 +115,7 @@ const CategoryDropdown = ({
 
   return (
     <div className="category-dropdown">
-      <label htmlFor={id}>{label}</label>
+      {showLabel && <label htmlFor={id}>{label}</label>}
       <div className="category-combobox">
         <input
           aria-autocomplete="list"
