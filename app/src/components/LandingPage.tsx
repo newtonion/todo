@@ -7,9 +7,9 @@ const LandingPage = () => {
     <div className="landing-page">
       <div className="landing-content">
         <div className="logo-container">
-            <img src={logoFlower} alt="Toduelip Logo" className="logo" />
+            <img src={logoFlower} alt="Todulip Logo" className="logo" />
         </div>
-        <h1 className="landing-title">Welcome to Toduelip</h1>
+        <h1 className="landing-title">Welcome to Todulip</h1>
         <p className="landing-subtitle">
           Let's get organized.
         </p>

@@ -8,7 +8,7 @@ function Header() {
   return (
     <>
       <header className="header">
-        <img src={logoheader} alt="Toduelip Logo" className="logo-header" />
+        <img src={logoheader} alt="Todulip Logo" className="logo-header" />
         <div className="auth-button-container">
             <Show when="signed-in">
             <UserButton />
