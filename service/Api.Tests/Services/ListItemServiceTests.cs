@@ -115,7 +115,7 @@ public class ListItemServiceTests
         Assert.Equal(1, result.Offset);
         var item = Assert.Single(result.Items);
         Assert.Equal("Beta task", item.Name);
-        Assert.True(item.Completed);
+        Assert.True(item.IsCompleted);
         Assert.Equal(dueDate, item.DueDate);
     }
 

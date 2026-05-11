@@ -106,7 +106,7 @@ const ListHeader = ({
       </div>
       <div className="main-page-list-statuses">
         <Toggle
-          checked={list.completed}
+          checked={list.isCompleted}
           id="list-completion-status"
           label="Complete"
           onChange={onCompletionStatusChange}

@@ -14,6 +14,7 @@ type ListSectionProps = {
 type ListLoadState = {
   listId: string;
   list: GetListResult | null;
+  items: ListItemSearchResult[];
   counts: CountListResult | null;
   error: string | null;
 };
@@ -64,10 +65,8 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
     setTotalTaskCount(itemsResult.totalCount);
     setLoadState({
       listId,
-      list: {
-        ...listResult,
-        items: itemsResult.items,
-      },
+      list: listResult,
+      items: itemsResult.items,
       counts: countsResult,
       error: null,
     });
@@ -97,10 +96,8 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
           setTotalTaskCount(itemsResult.totalCount);
           setLoadState({
             listId: selectedListId,
-            list: {
-              ...listResult,
-              items: itemsResult.items,
-            },
+            list: listResult,
+            items: itemsResult.items,
             counts: countsResult,
             error: null,
           });
@@ -111,6 +108,7 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
           setLoadState({
             listId: selectedListId,
             list: null,
+            items: [],
             counts: null,
             error: err instanceof Error ? err.message : 'Failed to load list',
           });
@@ -124,6 +122,7 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
   }, [getCounts, getList, searchListItems, selectedListId, taskOffset, taskSortDirection, taskSortField]);
 
   const list = loadState?.listId === selectedListId ? loadState.list : null;
+  const items = loadState?.listId === selectedListId ? loadState.items : [];
   const listCounts = loadState?.listId === selectedListId ? loadState.counts : null;
   const listError = loadState?.listId === selectedListId ? loadState.error : null;
   const isLoadingList = !list && !listError;
@@ -247,7 +246,7 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
             onArchiveStatusChange={listHeaderProps.handleArchiveStatusChange}
           />
           <TaskList
-            items={list.items}
+            items={items}
             taskOffset={taskOffset}
             taskPageSize={TASK_PAGE_SIZE}
             taskSortField={taskSortField}

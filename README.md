@@ -14,7 +14,7 @@ The API authenticates Clerk JWTs, creates or resolves the local user record per 
 ## Decision Points
 
 - Authentication and user provisioning:
-  - For production-worthy auth it made sense to use a third-party. ([Clerk](https://clerk.com/)) provides an attractive offering with libraries and packages that can be easily integrated along with a prebuilt UI. Since we are using Clerk, a new user database record is created when the API is accessed with a new Clerk token. This can be fleshed out further to provide a full user profile and settings.
+  - For production-worthy auth it made sense to use a third-party. ([Clerk](https://clerk.com/)) provides an attractive offering with libraries and packages that can be easily integrated along with a prebuilt UI. Since we are using Clerk, a new user database record is created when the API is accessed with a new Clerk token. This can be fleshed out further to provide a full user profile and settings, and works well for now given the transient state of Sqlite.
 - Data ownership and access control:
   - Records are owned by their creators with no option for sharing. Ownership is enforced via a WhereCurrentUserHasAccess check in the database for user-created entities. Check could be easily expanded if a sharing mechanism was created.
   - Access is controlled via the auth Id on the Clerk token, which maps to a user Id. The middleware retrieves the Id from the database and provides that as user context.

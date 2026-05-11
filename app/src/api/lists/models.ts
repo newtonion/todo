@@ -74,7 +74,7 @@ export interface SearchListResult {
 export interface ListItemSearchResult {
     id: string;
     name: string;
-    completed: boolean;
+    isCompleted: boolean;
     dueDate?: string | null;
 }
 
@@ -83,9 +83,8 @@ export interface GetListResult {
     name: string;
     category: string;
     categoryId?: string | null;
-    completed: boolean;
+    isCompleted: boolean;
     archived: boolean;
-    items: ListItemSearchResult[];
 }
 
 export interface CountListResult {

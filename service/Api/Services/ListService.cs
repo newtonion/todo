@@ -227,9 +227,7 @@ public class ListService : IListService
             Category = list.Category?.Name ?? string.Empty,
             CategoryId = list.CategoryId,
             Archived = list.Archived,
-            Completed = list.IsCompleted,
-            TotalItems = list.Children?.Count ?? 0,
-            CompletedItems = list.Children?.Count(c => c.IsCompleted) ?? 0
+            IsCompleted = list.IsCompleted
         };
     }
 

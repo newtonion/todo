@@ -100,7 +100,7 @@ public class ListItemService : IListItemService
             {
                 Id = li.Id,
                 Name = li.Name,
-                Completed = li.IsCompleted,
+                IsCompleted = li.IsCompleted,
                 DueDate = li.DueDate,
             })
             .ToListAsync(cancellationToken);

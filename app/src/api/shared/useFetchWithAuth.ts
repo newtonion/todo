@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/react';
 import { useCallback } from 'react';
 import { useApiError } from './apiErrorContextValue';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const FALLBACK_ERROR_MESSAGE = 'Something has gone wrong';
 
 function buildApiUrl(endpoint: string) {

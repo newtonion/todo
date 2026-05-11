@@ -89,7 +89,7 @@ public class ListIntegrationTests : IntegrationTestBase
         Assert.Equal("Sprint", GetString(getJson.RootElement, "name"));
         Assert.Equal("Work", GetString(getJson.RootElement, "category"));
         Assert.Equal(categoryId, GetGuid(getJson.RootElement, "categoryId"));
-        Assert.False(GetBoolean(getJson.RootElement, "completed"));
+        Assert.False(GetBoolean(getJson.RootElement, "isCompleted"));
 
         var countsResponse = await client.GetAsync($"/api/list/{listId}/counts");
         countsResponse.EnsureSuccessStatusCode();
@@ -108,7 +108,7 @@ public class ListIntegrationTests : IntegrationTestBase
         Assert.Equal("Renamed sprint", GetString(updatedJson.RootElement, "name"));
         Assert.Equal(string.Empty, GetString(updatedJson.RootElement, "category"));
         Assert.True(GetBoolean(updatedJson.RootElement, "archived"));
-        Assert.True(GetBoolean(updatedJson.RootElement, "completed"));
+        Assert.True(GetBoolean(updatedJson.RootElement, "isCompleted"));
     }
 
     [Fact]

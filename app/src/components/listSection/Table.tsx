@@ -29,7 +29,7 @@ type TableProps = {
 };
 
 const getTaskStatus = (item: ListItemSearchResult) => {
-  if (item.completed) {
+  if (item.isCompleted) {
     return 'Completed';
   }
 
@@ -241,7 +241,7 @@ const Table = ({
                 <td>
                   <div className="task-table-actions">
                     <Toggle
-                      checked={item.completed}
+                      checked={item.isCompleted}
                       id={`task-complete-${item.id}`}
                       label="Complete"
                       onChange={() => onToggleCompletion(item)}

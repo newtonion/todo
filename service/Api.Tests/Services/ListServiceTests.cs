@@ -362,7 +362,7 @@ public class ListServiceTests
         Assert.Equal("Work", result.Category);
         Assert.Equal(category.Id, result.CategoryId);
         Assert.True(result.Archived);
-        Assert.False(result.Completed);
+        Assert.False(result.IsCompleted);
     }
 
     [Fact]
@@ -380,7 +380,7 @@ public class ListServiceTests
         Assert.Equal("Inbox", result.Name);
         Assert.Equal(string.Empty, result.Category);
         Assert.Null(result.CategoryId);
-        Assert.True(result.Completed);
+        Assert.True(result.IsCompleted);
     }
 
     [Fact]
