@@ -1,0 +1,7 @@
+**/bin
+**/obj
+**/TestResults
+Api/data
+.vs
+.env
+.env.*

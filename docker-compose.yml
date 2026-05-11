@@ -1,0 +1,29 @@
+services:
+  api:
+    build:
+      context: ./service
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Clerk__Authority: ${CLERK_AUTHORITY}
+      Cors__AllowedOrigins__0: http://localhost:${WEB_PORT:-5173}
+    ports:
+      - "${API_PORT:-5135}:8080"
+    volumes:
+      - todo-api-data:/app/data
+
+  web:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      args:
+        VITE_CLERK_PUBLISHABLE_KEY: ${VITE_CLERK_PUBLISHABLE_KEY}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:5135/api}
+    ports:
+      - "${WEB_PORT:-5173}:80"
+    depends_on:
+      - api
+
+volumes:
+  todo-api-data:

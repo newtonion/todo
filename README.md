@@ -35,6 +35,7 @@ The API authenticates Clerk JWTs, creates or resolves the local user record per 
   - The authentication flow could be improved. There is no user profile (or even user name) stored within the app, we just create an identifier off of the Clerk Id. Clerk has webhooks and other features we could use to build and improve the user profile/settings. For now, the back-end is only using the Id.
   - The current swagger implementation requires you to log in to the front-end of the app and retrieve the token from a request. This is not ideal - flow here can be improved.
   - Manual testing of the API currently requires a real Clerk token. This can be improved by leveraging a local dev auth profile.
+  - The frontend does not use routing, so individual lists cannot be bookmarked or linked. Given the single-workspace layout and the ability to complete or archive lists, the current navigation model is acceptable.
 
 ## Prerequisites
 
@@ -64,6 +65,28 @@ Key settings:
 **Note:** the Clerk publishable key on the front-end and the Clerk:Authority must belong to the same Clerk application.
 
 ## Run Locally
+
+### Docker Compose
+
+Docker Compose can run both the API and frontend without installing Node.js or the .NET SDK locally.
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Before starting, update `.env` with your Clerk values. `VITE_CLERK_PUBLISHABLE_KEY` and `CLERK_AUTHORITY` must belong to the same Clerk application.
+
+The compose stack exposes:
+
+- Frontend: `http://localhost:5173`
+- API: `http://localhost:5135`
+- Swagger: `http://localhost:5135/swagger`
+- Health check: `http://localhost:5135/health`
+
+The API stores SQLite data in the `todo-api-data` Docker volume. If either host port is already in use, change `WEB_PORT` or `API_PORT` in `.env`; if you change `API_PORT`, also update `VITE_API_BASE_URL`. Because Vite reads `VITE_*` values at build time, rebuild the frontend image after changing `.env`.
+
+### Manual Development
 
 Start the API:
 
@@ -103,10 +126,9 @@ The frontend runs at `http://localhost:5173`.
 - CORS errors: Confirm the Vite origin shown in the browser is listed under `Cors:AllowedOrigins` in the backend configuration. The default development origin is `http://localhost:5173`.
 - Frontend cannot reach the API: Confirm the API is running with `dotnet run --launch-profile http` and that `VITE_API_BASE_URL` is set to `http://localhost:5135/api`.
 - Empty or stale local data: The default SQLite database is created at `service/Api/data/todo.db`. Migrations run automatically when the API starts outside the test environment.
+- Empty or stale Docker data: Compose stores SQLite data in the `todo-api-data` volume. Run `docker compose down -v` to reset it.
 - Swagger requests fail after previously working: Clerk session tokens are short-lived. Copy a fresh token from the frontend and authorize Swagger again.
 - Vite install or startup fails: Confirm the local Node version satisfies `^20.19.0` or `>=22.12.0`.
-
-
 
 ## Use Swagger
 
@@ -153,12 +175,15 @@ npm run build
 ```text
 todo/
   app/
+    Dockerfile
+    nginx.conf
     src/
       api/              API clients and shared fetch/error handling
       components/       React components grouped by feature area
       utils/            Shared frontend utilities
       test/             Frontend test setup
   service/
+    Dockerfile
     Api/
       Controllers/      HTTP API endpoints
       Services/         Application logic
