@@ -583,5 +583,9 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
-# SQLite data directory
-**/data/
+# SQLite data files
+**/data/*.db
+**/data/*.db-*
+**/data/*.sqlite
+**/data/*.sqlite3
+!**/data/.gitkeep
