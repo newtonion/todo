@@ -38,6 +38,7 @@ export interface SearchListRequest {
     categoryText?: string;
     includeCompleted: boolean;
     includeArchived: boolean;
+    onlyUpcomingOrOverdue: boolean;
 }
 
 export interface SearchListResponse {
@@ -67,8 +68,7 @@ export interface SearchListResult {
     categoryName?: string;
     isCompleted: boolean;
     archived: boolean;
-    totalItems: number;
-    completedItems: number;
+    soonestDueDate: string | null;
 }
 
 export interface ListItemSearchResult {
@@ -78,7 +78,7 @@ export interface ListItemSearchResult {
     dueDate?: string | null;
 }
 
-export interface ListGetResult {
+export interface GetListResult {
     id: string;
     name: string;
     category: string;
@@ -88,7 +88,7 @@ export interface ListGetResult {
     items: ListItemSearchResult[];
 }
 
-export interface ListCountResult {
+export interface CountListResult {
     totalItems: number;
     completedItems: number;
 }

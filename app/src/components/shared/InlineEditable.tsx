@@ -14,6 +14,7 @@ type InlineEditableProps = {
   ariaLabel: string;
   isValid?: boolean;
   className?: string;
+  displayClassName?: string;
   onStartEdit: () => void;
   onSave: (event: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
   onCancel: () => void;
@@ -28,6 +29,7 @@ const InlineEditable = ({
   ariaLabel,
   isValid = true,
   className = '',
+  displayClassName = 'task-table-cell-action',
   onStartEdit,
   onSave,
   onCancel,
@@ -57,7 +59,7 @@ const InlineEditable = ({
   }
 
   return (
-    <div className="task-table-cell-action">
+    <div className={displayClassName}>
       <span>{displayValue}</span>
       <EditIconButton
         ariaLabel={`Edit ${ariaLabel}`}

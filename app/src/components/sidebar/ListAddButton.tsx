@@ -1,3 +1,5 @@
+import './ListAddButton.css';
+
 type ListAddButtonProps = {
   onClick: () => void | Promise<void>;
 };

@@ -24,3 +24,43 @@ export const toDateInputValue = (dueDate?: string | null): string => {
 
   return dueDate.split('T')[0] || dueDate;
 };
+
+/**
+ * Checks if a date is in the past or within the next two days.
+ * @param soonestDueDate - ISO date string, Date object, or null/undefined
+ * @returns True if the date is in the past or within the next two days, false otherwise
+ */
+export function isPastOrWithinNextTwoDays(
+  soonestDueDate: string | Date | null | undefined
+): boolean {
+  if (!soonestDueDate) return false;
+
+  const due = new Date(soonestDueDate);
+  if (Number.isNaN(due.getTime())) return false;
+
+  const now = new Date();
+  const twoDaysFromNow = new Date(now);
+  twoDaysFromNow.setDate(now.getDate() + 2);
+
+  return due <= twoDaysFromNow;
+}
+
+/**
+ * Checks if a date is in the past.
+ * @param soonestDueDate - ISO date string, Date object, or null/undefined
+ * @returns True if the date is before today, false otherwise
+ */
+export function isPast(
+  soonestDueDate: string | Date | null | undefined
+): boolean {
+  if (!soonestDueDate) return false;
+
+  const due = new Date(soonestDueDate);
+  if (Number.isNaN(due.getTime())) return false;
+
+  const now = new Date();
+  const dueDateOnly = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+  const todayDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  return dueDateOnly < todayDateOnly;
+}

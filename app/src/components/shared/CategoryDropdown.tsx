@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useState } from 'react';
 import { useCategoryApi } from '../../api/categories/useCategoryApi';
+import './CategoryDropdown.css';
 
 export type CategoryOption = {
   id: string;

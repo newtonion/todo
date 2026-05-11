@@ -1,15 +1,18 @@
 import { useId, useState } from 'react';
 import Toggle from '../shared/Toggle';
+import './ListsSectionFilters.css';
 
 type ListsSectionFiltersProps = {
   searchText: string;
   categoryText: string;
   includeCompleted: boolean;
   includeArchived: boolean;
+  includeOnlyUpcomingOrOverdue: boolean;
   onSearchTextChange: (searchText: string) => void;
   onCategoryTextChange: (categoryText: string) => void;
   onIncludeCompletedChange: (includeCompleted: boolean) => void;
   onIncludeArchivedChange: (includeArchived: boolean) => void;
+  onOnlyUpcomingOrOverdueChange: (onlyUpcomingOrOverdue: boolean) => void;
 };
 
 const ListsSectionFilters = ({
@@ -17,10 +20,12 @@ const ListsSectionFilters = ({
   categoryText,
   includeCompleted,
   includeArchived,
+  includeOnlyUpcomingOrOverdue,
   onSearchTextChange,
   onCategoryTextChange,
   onIncludeCompletedChange,
   onIncludeArchivedChange,
+  onOnlyUpcomingOrOverdueChange,
 }: ListsSectionFiltersProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const filtersContentId = useId();
@@ -63,14 +68,20 @@ const ListsSectionFilters = ({
             <Toggle
               checked={includeCompleted}
               id="include-completed-lists"
-              label="Show Completed"
+              label="Completed"
               onChange={onIncludeCompletedChange}
             />
             <Toggle
               checked={includeArchived}
               id="include-archived-lists"
-              label="Show Archived"
+              label="Archived"
               onChange={onIncludeArchivedChange}
+            />
+            <Toggle
+              checked={includeOnlyUpcomingOrOverdue}
+              id="only-upcoming-or-overdue-lists"
+              label="Upcoming/Overdue"
+              onChange={onOnlyUpcomingOrOverdueChange}
             />
           </div>
         </div>

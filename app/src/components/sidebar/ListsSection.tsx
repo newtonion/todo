@@ -8,6 +8,7 @@ import ListsSectionFilters from './ListsSectionFilters';
 import Pagination from '../shared/Pagination';
 import { useListApi } from '../../api/lists/useListApi';
 import type { SearchListResult } from '../../api/lists/models';
+import './ListsSection.css';
 
 type ListsSectionProps = {
   selectedListId: string | null;
@@ -27,6 +28,7 @@ const ListsSection = ({ selectedListId, onListSelect }: ListsSectionProps) => {
   const [debouncedCategoryText, setDebouncedCategoryText] = useState('');
   const [includeCompleted, setIncludeCompleted] = useState(false);
   const [includeArchived, setIncludeArchived] = useState(false);
+  const [includeOnlyUpcomingOrOverdue, setIncludeOnlyUpcomingOrOverdue] = useState(false);
   const [listOffset, setListOffset] = useState(0);
   const { createList, searchLists } = useListApi();
 
@@ -48,7 +50,8 @@ const ListsSection = ({ selectedListId, onListSelect }: ListsSectionProps) => {
     categoryText: debouncedCategoryText || undefined,
     includeCompleted,
     includeArchived,
-  }), [debouncedCategoryText, includeArchived, includeCompleted, listOffset, searchLists, searchText]);
+    onlyUpcomingOrOverdue: includeOnlyUpcomingOrOverdue,
+  }), [debouncedCategoryText, includeArchived, includeCompleted, includeOnlyUpcomingOrOverdue, listOffset, searchLists, searchText]);
 
   useEffect(() => {
     let isActive = true;
@@ -135,6 +138,11 @@ const ListsSection = ({ selectedListId, onListSelect }: ListsSectionProps) => {
     setIncludeArchived(nextIncludeArchived);
   };
 
+  const handleOnlyUpcomingOrOverdueChange = (nextOnlyUpcomingOrOverdue: boolean) => {
+    resetPaging();
+    setIncludeOnlyUpcomingOrOverdue(nextOnlyUpcomingOrOverdue);
+  };
+
   const handlePreviousPageClick = () => {
     setListOffset((currentOffset) => Math.max(0, currentOffset - LIST_PAGE_SIZE));
   };
@@ -167,10 +175,12 @@ const ListsSection = ({ selectedListId, onListSelect }: ListsSectionProps) => {
         categoryText={categoryText}
         includeArchived={includeArchived}
         includeCompleted={includeCompleted}
+        includeOnlyUpcomingOrOverdue={includeOnlyUpcomingOrOverdue}
         searchText={searchText}
         onCategoryTextChange={handleCategoryTextChange}
         onIncludeArchivedChange={handleIncludeArchivedChange}
         onIncludeCompletedChange={handleIncludeCompletedChange}
+        onOnlyUpcomingOrOverdueChange={handleOnlyUpcomingOrOverdueChange}
         onSearchTextChange={handleSearchTextChange}
       />
       {isLoadingLists && <p>Loading lists...</p>}

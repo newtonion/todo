@@ -5,6 +5,7 @@ import MainPage from './components/listSection/ListSection';
 import LandingPage from './components/LandingPage';
 import { Header } from './components/Header';
 import { useUserApi } from './api/users/useUserApi';
+import './App.css';
 
 function App() {
   const { isSignedIn, isLoaded, user } = useUser();
@@ -46,7 +47,7 @@ function App() {
   return (
     <>
       <Header />
-      <div style={{ display: 'flex', minHeight: '100vh' }}>
+      <div className="app-shell">
         <Sidebar selectedListId={selectedListId} onListSelect={setSelectedListId} />
         <MainPage selectedListId={selectedListId} />
       </div>

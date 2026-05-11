@@ -1,0 +1,16 @@
+.list-add-button {
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid rgba(8, 6, 13, 0.12);
+  border-radius: var(--radius-pill);
+  background: #fff;
+  color: #08060d;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.list-add-button:hover,
+.list-add-button:focus-visible {
+  border-color: rgba(8, 6, 13, 0.4);
+}

@@ -1,4 +1,5 @@
 import Modal from '../shared/Modal';
+import './CreateModal.css';
 
 type FormField = {
   id: string;

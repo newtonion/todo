@@ -1,3 +1,5 @@
+import './Toggle.css';
+
 type ToggleProps = {
   checked: boolean;
   label: string;

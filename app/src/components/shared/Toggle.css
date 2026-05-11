@@ -1,0 +1,55 @@
+.toggle-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-label {
+  color: var(--text-h);
+  font-size: 0.9rem;
+}
+
+.toggle-control input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.toggle-track {
+  width: 2.25rem;
+  height: 1.25rem;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--social-bg);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.toggle-thumb {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: var(--radius-pill);
+  background: var(--text);
+  transition: transform 0.2s, background 0.2s;
+}
+
+.toggle-control input:checked + .toggle-track {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.toggle-control input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(1rem);
+  background: var(--accent);
+}
+
+.toggle-control input:focus-visible + .toggle-track {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

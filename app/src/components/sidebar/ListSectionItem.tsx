@@ -1,7 +1,10 @@
 import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 import { faArchive } from '@fortawesome/free-solid-svg-icons/faArchive';
+import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import type { SearchListResult } from '../../api/lists/models';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { isPast, isPastOrWithinNextTwoDays } from '../../utils/dateUtils';
+import './ListSectionItem.css';
 
 type ListSectionItemProps = {
   isSelected: boolean;
@@ -10,6 +13,11 @@ type ListSectionItemProps = {
 };
 
 const ListSectionItem = ({ isSelected, list, onClick }: ListSectionItemProps) => {
+
+  const isDone = list.isCompleted || list.archived;
+  const isUpcoming = isPastOrWithinNextTwoDays(list.soonestDueDate) && !isDone;
+  const isPastDue = isPast(list.soonestDueDate) && !isDone;
+
   return (
     <li className="list-section-item">
       <button
@@ -29,6 +37,16 @@ const ListSectionItem = ({ isSelected, list, onClick }: ListSectionItemProps) =>
             {list.archived && (
               <span className="list-section-item-status-badge" title="Archived">
                 <FontAwesomeIcon icon={faArchive} />
+              </span>
+            )}
+            {isPastDue && (
+              <span className="list-section-item-past-due" title="Past Due">
+                <FontAwesomeIcon icon={faClock} />
+              </span>
+            )}
+            {isUpcoming && !isPastDue && (
+              <span className="list-section-item-upcoming" title="Due Soon">
+                <FontAwesomeIcon icon={faClock} />
               </span>
             )}
           </span>

@@ -2,6 +2,7 @@ import type { ButtonHTMLAttributes } from 'react';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faCheck, faPen, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import './IconButtons.css';
 
 type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label'> & {
   ariaLabel: string;
@@ -17,12 +18,12 @@ export const IconButton = ({
   type = 'button',
   ...buttonProps
 }: IconButtonProps) => {
-  const sizeClass = size === 'small' ? ' main-page-icon-button-small' : '';
+  const sizeClass = size === 'small' ? ' icon-button-small' : '';
 
   return (
     <button
       aria-label={ariaLabel}
-      className={`main-page-icon-button${sizeClass}${className ? ` ${className}` : ''}`}
+      className={`icon-button${sizeClass}${className ? ` ${className}` : ''}`}
       type={type}
       {...buttonProps}
     >

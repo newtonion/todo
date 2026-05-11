@@ -23,7 +23,7 @@ describe('Modal', () => {
       </Modal>
     );
 
-    const backdrop = container.querySelector('.modal-backdrop');
+    const backdrop = container.querySelector<HTMLElement>('.modal-backdrop');
     backdrop?.click();
 
     expect(closeCalled).toBe(true);

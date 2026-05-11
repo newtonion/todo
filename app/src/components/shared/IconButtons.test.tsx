@@ -38,7 +38,7 @@ describe('IconButtons', () => {
         <IconButton ariaLabel="Test button" icon={faPlus} size="small" />
       );
       
-      const button = container.querySelector('.main-page-icon-button-small');
+      const button = container.querySelector('.icon-button-small');
       expect(button).toBeInTheDocument();
     });
 

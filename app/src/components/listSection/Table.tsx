@@ -1,12 +1,15 @@
 import { useCallback, useState } from 'react';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import type { ListItemSearchResult } from '../../api/lists/models';
-import { formatDueDate, toDateInputValue } from '../../utils/dateUtils';
+import { formatDueDate, isPast, toDateInputValue } from '../../utils/dateUtils';
+import { IconButton } from '../shared/IconButtons';
 import Pagination from '../shared/Pagination';
 import Toggle from '../shared/Toggle';
 import EditableCell, { type EditState } from './EditableCell';
 import SortableHeader from './SortableHeader';
+import './Table.css';
 
-export type TaskSortField = 'name' | 'dueDate' | 'completed';
+export type TaskSortField = 'name' | 'dueDate' | 'status';
 export type SortDirection = 'asc' | 'desc';
 
 type TableProps = {
@@ -22,6 +25,19 @@ type TableProps = {
   onSaveName: (item: ListItemSearchResult, name: string) => void | Promise<void>;
   onSortChange: (field: TaskSortField) => void;
   onToggleCompletion: (item: ListItemSearchResult) => void | Promise<void>;
+  onDeleteItem: (item: ListItemSearchResult) => void | Promise<void>;
+};
+
+const getTaskStatus = (item: ListItemSearchResult) => {
+  if (item.completed) {
+    return 'Completed';
+  }
+
+  if (isPast(item.dueDate)) {
+    return 'Overdue';
+  }
+
+  return 'Pending';
 };
 
 const Table = ({
@@ -37,6 +53,7 @@ const Table = ({
   onSaveName,
   onSortChange,
   onToggleCompletion,
+  onDeleteItem,
 }: TableProps) => {
   const [nameEditState, setNameEditState] = useState<EditState | null>(null);
   const [dueDateEditState, setDueDateEditState] = useState<EditState | null>(null);
@@ -130,6 +147,20 @@ const Table = ({
     setDueDateEditState((current) => current ? { ...current, value } : null);
   }, []);
 
+  const handleDeleteClick = useCallback(async (item: ListItemSearchResult) => {
+    const shouldDelete = window.confirm(`Delete "${item.name}"?`);
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      await onDeleteItem(item);
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+    }
+  }, [onDeleteItem]);
+
   return (
     <>
       <Pagination
@@ -160,57 +191,76 @@ const Table = ({
               onSortChange={onSortChange}
             />
             <SortableHeader
-              field="completed"
-              label="Complete"
+              field="status"
+              label="Status"
               currentSortField={sortField}
               sortDirection={sortDirection}
               onSortChange={onSortChange}
             />
+            <th className="task-table-actions-header">Actions</th>
           </tr>
         </thead>
         <tbody>
-          {items.map((item) => (
-            <tr key={item.id}>
-              <td>
-                <EditableCell
-                  item={item}
-                  editState={nameEditState}
-                  displayValue={item.name}
-                  inputType="text"
-                  ariaLabel={`Task name for ${item.name}`}
-                  isValid={!!nameEditState?.value.trim()}
-                  onStartEdit={() => handleStartNameEdit(item)}
-                  onSave={(event) => handleSaveName(event, item)}
-                  onCancel={handleCancelNameEdit}
-                  onChange={handleNameChange}
-                />
-              </td>
-              <td>
-                <EditableCell
-                  item={item}
-                  editState={dueDateEditState}
-                  displayValue={formatDueDate(item.dueDate)}
-                  inputType="date"
-                  ariaLabel={`Due date for ${item.name}`}
-                  onStartEdit={() => handleStartDueDateEdit(item)}
-                  onSave={(event) => handleSaveDueDate(event, item)}
-                  onCancel={handleCancelDueDateEdit}
-                  onChange={handleDueDateChange}
-                />
-              </td>
-              <td>
-                <Toggle
-                  checked={item.completed}
-                  id={`task-complete-${item.id}`}
-                  label="Complete"
-                  onChange={() => onToggleCompletion(item)}
-                />
-              </td>
-            </tr>
-          ))}
+          {items.map((item) => {
+            const status = getTaskStatus(item);
+
+            return (
+              <tr key={item.id}>
+                <td>
+                  <EditableCell
+                    item={item}
+                    editState={nameEditState}
+                    displayValue={item.name}
+                    inputType="text"
+                    ariaLabel={`Task name for ${item.name}`}
+                    isValid={!!nameEditState?.value.trim()}
+                    onStartEdit={() => handleStartNameEdit(item)}
+                    onSave={(event) => handleSaveName(event, item)}
+                    onCancel={handleCancelNameEdit}
+                    onChange={handleNameChange}
+                  />
+                </td>
+                <td>
+                  <EditableCell
+                    item={item}
+                    editState={dueDateEditState}
+                    displayValue={formatDueDate(item.dueDate)}
+                    inputType="date"
+                    ariaLabel={`Due date for ${item.name}`}
+                    onStartEdit={() => handleStartDueDateEdit(item)}
+                    onSave={(event) => handleSaveDueDate(event, item)}
+                    onCancel={handleCancelDueDateEdit}
+                    onChange={handleDueDateChange}
+                  />
+                </td>
+                <td>
+                  <span className={`task-table-status task-table-status-${status.toLowerCase()}`}>
+                    {status}
+                  </span>
+                </td>
+                <td>
+                  <div className="task-table-actions">
+                    <Toggle
+                      checked={item.completed}
+                      id={`task-complete-${item.id}`}
+                      label="Complete"
+                      onChange={() => onToggleCompletion(item)}
+                    />
+                    <IconButton
+                      ariaLabel={`Delete ${item.name}`}
+                      className="task-table-delete-button"
+                      icon={faTrash}
+                      size="small"
+                      onClick={() => handleDeleteClick(item)}
+                    />
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
           {items.length === 0 && (
             <tr>
-              <td colSpan={3}>No items in this list.</td>
+              <td colSpan={4}>No items in this list.</td>
             </tr>
           )}
         </tbody>

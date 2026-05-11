@@ -9,7 +9,7 @@
   gap: 1rem;
   box-sizing: border-box;
   border: 1px solid #fda29b;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   padding: 0.9rem 1rem;
   background: #fff5f5;
   color: #7a271a;

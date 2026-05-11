@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react';
-import type { ListGetResult } from '../../api/lists/models';
+import type { GetListResult } from '../../api/lists/models';
 import type { TaskSortField, SortDirection } from '../listSection/Table';
 import type { EditState } from '../shared/InlineEditable';
 
 type UseListHeaderProps = {
   selectedListId: string;
-  list: ListGetResult | null;
+  list: GetListResult | null;
   taskSortField: TaskSortField;
   taskSortDirection: SortDirection;
   taskOffset: number;

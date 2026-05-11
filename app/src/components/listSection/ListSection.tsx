@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useListApi } from '../../api/lists/useListApi';
-import type { ListCountResult, ListGetResult, ListItemSearchResult } from '../../api/lists/models';
+import type { CountListResult, GetListResult, ListItemSearchResult } from '../../api/lists/models';
 import { useListHeader } from '../hooks/useListHeader';
 import ListHeader from './ListHeader';
 import TaskList from './TaskList';
@@ -13,8 +13,8 @@ type ListSectionProps = {
 
 type ListLoadState = {
   listId: string;
-  list: ListGetResult | null;
-  counts: ListCountResult | null;
+  list: GetListResult | null;
+  counts: CountListResult | null;
   error: string | null;
 };
 
@@ -31,6 +31,7 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
     setListItemDueDate,
     setListCategory,
     toggleListItemCompletion,
+    deleteListItem,
     archiveList,
     completeList
   } = useListApi();
@@ -148,7 +149,7 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
 
   if (!selectedListId) {
     return (
-      <main style={{ flex: 1, padding: '2rem' }}>
+      <main className="list-section-main">
         <h1>Select a list</h1>
       </main>
     );
@@ -194,6 +195,15 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
     await reloadList();
   };
 
+  const handleDeleteTask = async (item: ListItemSearchResult) => {
+    if (!selectedListId) {
+      return;
+    }
+
+    await deleteListItem(selectedListId, item.id);
+    await reloadList();
+  };
+
   const handleTaskSortChange = (field: TaskSortField) => {
     setTaskOffset(0);
 
@@ -215,7 +225,7 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
   };
 
   return (
-    <main style={{ flex: 1, padding: '2rem' }}>
+    <main className="list-section-main">
       {isLoadingList && <h1>Loading list...</h1>}
       {listError && <p>{listError}</p>}
       {!isLoadingList && !listError && list && (
@@ -250,6 +260,7 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
             onSaveTaskName={handleSaveTaskName}
             onSaveTaskDueDate={handleSaveTaskDueDate}
             onToggleTaskCompletion={handleToggleTaskCompletion}
+            onDeleteTask={handleDeleteTask}
             onTaskSortChange={handleTaskSortChange}
             onPreviousTaskPage={handlePreviousTaskPageClick}
             onNextTaskPage={handleNextTaskPageClick}

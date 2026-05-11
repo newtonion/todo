@@ -86,7 +86,7 @@ describe('CreateModal', () => {
         type: 'text' as const,
         value: 'value',
         onChange: () => {},
-        renderInput: (id: string, value: string) => (
+        renderInput: (_id: string, value: string) => (
           <div data-testid="custom-input">{value}</div>
         ),
       },
@@ -189,8 +189,7 @@ describe('CreateModal', () => {
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
 
-  it('should not submit when invalid', async () => {
-    const user = userEvent.setup();
+  it('should not submit when invalid', () => {
     const handleSubmit = vi.fn();
 
     render(

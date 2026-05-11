@@ -1,0 +1,5 @@
+.main-page-table-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}

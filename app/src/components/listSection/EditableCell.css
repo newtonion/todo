@@ -1,0 +1,30 @@
+.task-table-cell-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  text-align: left;
+}
+
+.task-table-cell-action span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.task-table-inline-edit {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.task-table-inline-edit input {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.4rem 0.55rem;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+}

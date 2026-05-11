@@ -2,6 +2,7 @@ import type { ListItemSearchResult } from '../../api/lists/models';
 import { AddIconButton } from '../shared/IconButtons';
 import Table, { type SortDirection, type TaskSortField } from './Table';
 import TaskCreateModal from '../sidebar/TaskCreateModal';
+import './TaskList.css';
 
 type TaskListProps = {
   items: ListItemSearchResult[];
@@ -17,6 +18,7 @@ type TaskListProps = {
   onSaveTaskName: (item: ListItemSearchResult, name: string) => Promise<void>;
   onSaveTaskDueDate: (item: ListItemSearchResult, dueDate: string | null) => Promise<void>;
   onToggleTaskCompletion: (item: ListItemSearchResult) => Promise<void>;
+  onDeleteTask: (item: ListItemSearchResult) => Promise<void>;
   onTaskSortChange: (field: TaskSortField) => void;
   onPreviousTaskPage: () => void;
   onNextTaskPage: () => void;
@@ -36,6 +38,7 @@ const TaskList = ({
   onSaveTaskName,
   onSaveTaskDueDate,
   onToggleTaskCompletion,
+  onDeleteTask,
   onTaskSortChange,
   onPreviousTaskPage,
   onNextTaskPage,
@@ -61,6 +64,7 @@ const TaskList = ({
         onSaveName={onSaveTaskName}
         onSortChange={onTaskSortChange}
         onToggleCompletion={onToggleTaskCompletion}
+        onDeleteItem={onDeleteTask}
       />
       {isCreateTaskModalOpen && (
         <TaskCreateModal

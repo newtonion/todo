@@ -1,0 +1,65 @@
+.list-create-modal,
+.task-create-modal {
+  width: min(22rem, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+
+.list-create-modal h3,
+.task-create-modal h3 {
+  margin: 0;
+  color: var(--text-h);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.list-create-modal label,
+.task-create-modal label {
+  color: var(--text-h);
+  font-size: 0.9rem;
+}
+
+.list-create-modal input,
+.task-create-modal input,
+.category-dropdown input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.75rem;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.modal-actions button {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.55rem 0.85rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.modal-actions button[type='submit'] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.modal-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}

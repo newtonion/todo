@@ -1,12 +1,13 @@
-import type { ListCountResult, ListGetResult } from '../../api/lists/models';
+import type { CountListResult, GetListResult } from '../../api/lists/models';
 import CategoryDropdown from '../shared/CategoryDropdown';
 import InlineEditable, { type EditState } from '../shared/InlineEditable';
 import { DiscardIconButton, EditIconButton, SaveIconButton } from '../shared/IconButtons';
 import Toggle from '../shared/Toggle';
+import './ListHeader.css';
 
 type ListHeaderProps = {
-  list: ListGetResult;
-  listCounts: ListCountResult | null;
+  list: GetListResult;
+  listCounts: CountListResult | null;
   listNameEditState: EditState | null;
   listCategoryEditState: EditState | null;
   onEditListClick: () => void;
@@ -49,6 +50,7 @@ const ListHeader = ({
           ariaLabel="List name"
           isValid={!!listNameEditState?.value.trim()}
           className="main-page-list-name-edit"
+          displayClassName="main-page-list-name-row"
           onStartEdit={onEditListClick}
           onSave={onSaveListName}
           onCancel={onDiscardListName}

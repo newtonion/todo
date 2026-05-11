@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { formatDueDate, toDateInputValue } from './dateUtils.ts';
+import { describe, it, expect, vi } from 'vitest';
+import { formatDueDate, isPast, toDateInputValue } from './dateUtils.ts';
 
 describe('dateUtils', () => {
   describe('formatDueDate', () => {
@@ -53,6 +53,43 @@ describe('dateUtils', () => {
     it('should handle various ISO formats', () => {
       expect(toDateInputValue('2026-12-31T23:59:59.999Z')).toBe('2026-12-31');
       expect(toDateInputValue('2026-01-01T00:00:00+00:00')).toBe('2026-01-01');
+    });
+  });
+
+  describe('isPast', () => {
+    it('should return false for null input', () => {
+      expect(isPast(null)).toBe(false);
+    });
+
+    it('should return false for invalid dates', () => {
+      expect(isPast('not-a-date')).toBe(false);
+    });
+
+    it('should return false when due date is earlier on the same day', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-05-11T18:30:00'));
+
+      expect(isPast('2026-05-11T08:00:00')).toBe(false);
+
+      vi.useRealTimers();
+    });
+
+    it('should return true when due date is before today', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-05-11T08:00:00'));
+
+      expect(isPast('2026-05-10T23:59:59')).toBe(true);
+
+      vi.useRealTimers();
+    });
+
+    it('should return false when due date is after today', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-05-11T08:00:00'));
+
+      expect(isPast('2026-05-12T00:00:00')).toBe(false);
+
+      vi.useRealTimers();
     });
   });
 });

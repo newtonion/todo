@@ -1,5 +1,6 @@
 import type { ListItemSearchResult } from '../../api/lists/models';
 import InlineEditable, { type EditState } from '../shared/InlineEditable';
+import './EditableCell.css';
 
 type EditableCellProps = {
   item: ListItemSearchResult;
