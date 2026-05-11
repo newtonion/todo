@@ -275,4 +275,52 @@ public class ListEntityExtensionsTests
         var name = Assert.Single(names);
         Assert.Equal("ActiveDue", name);
     }
+
+    [Fact]
+    public async Task WhereUpcomingOrOverdue_WhenTrue_ExcludesArchivedLists()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var archivedList = AddList(context, "ArchivedList", UserId, category.Id, archived: true);
+        var activeList = AddList(context, "ActiveList", UserId, category.Id);
+        await context.SaveChangesAsync();
+
+        AddItem(context, "Overdue task in archived list", archivedList.Id, UserId, dueDate: DateTime.UtcNow.AddDays(-1));
+        AddItem(context, "Overdue task in active list", activeList.Id, UserId, dueDate: DateTime.UtcNow.AddDays(-1));
+        await context.SaveChangesAsync();
+
+        var names = await context.Lists
+            .Include(l => l.Children)
+            .WhereUpcomingOrOverdue(true)
+            .Select(l => l.Name)
+            .ToListAsync();
+
+        var name = Assert.Single(names);
+        Assert.Equal("ActiveList", name);
+    }
+
+    [Fact]
+    public async Task WhereUpcomingOrOverdue_WhenTrue_ExcludesCompletedLists()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var completedList = AddList(context, "CompletedList", UserId, category.Id, isCompleted: true);
+        var activeList = AddList(context, "ActiveList", UserId, category.Id);
+        await context.SaveChangesAsync();
+
+        AddItem(context, "Overdue task in completed list", completedList.Id, UserId, dueDate: DateTime.UtcNow.AddDays(-1));
+        AddItem(context, "Overdue task in active list", activeList.Id, UserId, dueDate: DateTime.UtcNow.AddDays(-1));
+        await context.SaveChangesAsync();
+
+        var names = await context.Lists
+            .Include(l => l.Children)
+            .WhereUpcomingOrOverdue(true)
+            .Select(l => l.Name)
+            .ToListAsync();
+
+        var name = Assert.Single(names);
+        Assert.Equal("ActiveList", name);
+    }
 }

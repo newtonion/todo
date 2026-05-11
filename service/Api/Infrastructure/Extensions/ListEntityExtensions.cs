@@ -56,6 +56,8 @@ public static class ListEntityExtensions
             return query;
 
         var upcomingWindow = DateTime.UtcNow.AddDays(2);
-        return query.Where(l => l.Children.Any(x=> x.DueDate <= upcomingWindow && !x.IsCompleted));
+        return query
+            .Where(x=> !x.Archived && !x.IsCompleted)
+            .Where(l => l.Children.Any(x=> x.DueDate <= upcomingWindow && !x.IsCompleted));
     }
 }
