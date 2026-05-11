@@ -131,7 +131,7 @@ public class ListItemServiceTests
         await context.SaveChangesAsync();
         var service = CreateService(database);
 
-        var result = await service.GetAsync(UserId, item.Id);
+        var result = await service.GetAsync(UserId, list.Id, item.Id);
 
         Assert.Equal(item.Id, result.Id);
         Assert.Equal("Write tests", result.Name);
@@ -156,7 +156,7 @@ public class ListItemServiceTests
         await context.SaveChangesAsync();
         var service = CreateService(database);
 
-        await Assert.ThrowsAsync<NotFoundException>(() => service.GetAsync(UserId, otherUserItem.Id));
+        await Assert.ThrowsAsync<NotFoundException>(() => service.GetAsync(UserId, list.Id, otherUserItem.Id));
     }
 
     [Fact]
@@ -171,7 +171,7 @@ public class ListItemServiceTests
         await context.SaveChangesAsync();
         var service = CreateService(database, validator.Object);
 
-        await service.RenameAsync(UserId, item.Id, "New");
+        await service.RenameAsync(UserId, list.Id, item.Id, "New");
 
         context.ChangeTracker.Clear();
         Assert.Equal("New", (await context.ListItems.FindAsync(item.Id))!.Name);
@@ -192,7 +192,7 @@ public class ListItemServiceTests
         await context.SaveChangesAsync();
         var service = CreateService(database);
 
-        await service.SetDueDateAsync(UserId, item.Id, dueDate);
+        await service.SetDueDateAsync(UserId, list.Id, item.Id, dueDate);
 
         context.ChangeTracker.Clear();
         Assert.Equal(dueDate, (await context.ListItems.FindAsync(item.Id))!.DueDate);
@@ -209,11 +209,11 @@ public class ListItemServiceTests
         await context.SaveChangesAsync();
         var service = CreateService(database);
 
-        await service.ToggleCompletionAsync(UserId, item.Id);
+        await service.ToggleCompletionAsync(UserId, list.Id, item.Id);
         context.ChangeTracker.Clear();
         Assert.True((await context.ListItems.FindAsync(item.Id))!.IsCompleted);
 
-        await service.ToggleCompletionAsync(UserId, item.Id);
+        await service.ToggleCompletionAsync(UserId, list.Id, item.Id);
         context.ChangeTracker.Clear();
         Assert.False((await context.ListItems.FindAsync(item.Id))!.IsCompleted);
     }
@@ -230,7 +230,7 @@ public class ListItemServiceTests
         await context.SaveChangesAsync();
         var service = CreateService(database);
 
-        await service.DeleteAsync(UserId, ownedItem.Id);
+        await service.DeleteAsync(UserId, list.Id, ownedItem.Id);
 
         context.ChangeTracker.Clear();
         Assert.Null(await context.ListItems.FindAsync(ownedItem.Id));
@@ -248,10 +248,36 @@ public class ListItemServiceTests
         await context.SaveChangesAsync();
         var service = CreateService(database);
 
-        await Assert.ThrowsAsync<NotFoundException>(() => service.RenameAsync(UserId, otherUserItem.Id, "New"));
-        await Assert.ThrowsAsync<NotFoundException>(() => service.SetDueDateAsync(UserId, otherUserItem.Id, null));
-        await Assert.ThrowsAsync<NotFoundException>(() => service.ToggleCompletionAsync(UserId, otherUserItem.Id));
-        await Assert.ThrowsAsync<NotFoundException>(() => service.DeleteAsync(UserId, otherUserItem.Id));
+        await Assert.ThrowsAsync<NotFoundException>(() => service.RenameAsync(UserId, list.Id, otherUserItem.Id, "New"));
+        await Assert.ThrowsAsync<NotFoundException>(() => service.SetDueDateAsync(UserId, list.Id, otherUserItem.Id, null));
+        await Assert.ThrowsAsync<NotFoundException>(() => service.ToggleCompletionAsync(UserId, list.Id, otherUserItem.Id));
+        await Assert.ThrowsAsync<NotFoundException>(() => service.DeleteAsync(UserId, list.Id, otherUserItem.Id));
+    }
+
+    [Fact]
+    public async Task ItemOperations_WhenItemIsInDifferentOwnedList_ThrowNotFoundException()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var itemList = AddList(context, "Item list", UserId, category.Id);
+        var routeList = AddList(context, "Route list", UserId, category.Id);
+        var item = AddItem(context, "Task", itemList.Id, UserId, dueDate: null);
+        await context.SaveChangesAsync();
+        var service = CreateService(database);
+
+        await Assert.ThrowsAsync<NotFoundException>(() => service.GetAsync(UserId, routeList.Id, item.Id));
+        await Assert.ThrowsAsync<NotFoundException>(() => service.RenameAsync(UserId, routeList.Id, item.Id, "New"));
+        await Assert.ThrowsAsync<NotFoundException>(() => service.SetDueDateAsync(UserId, routeList.Id, item.Id, DateTime.UtcNow));
+        await Assert.ThrowsAsync<NotFoundException>(() => service.ToggleCompletionAsync(UserId, routeList.Id, item.Id));
+        await Assert.ThrowsAsync<NotFoundException>(() => service.DeleteAsync(UserId, routeList.Id, item.Id));
+
+        context.ChangeTracker.Clear();
+        var unchangedItem = await context.ListItems.FindAsync(item.Id);
+        Assert.NotNull(unchangedItem);
+        Assert.Equal("Task", unchangedItem.Name);
+        Assert.False(unchangedItem.IsCompleted);
+        Assert.Null(unchangedItem.DueDate);
     }
 
     private static ListItemService CreateService(

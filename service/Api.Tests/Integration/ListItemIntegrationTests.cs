@@ -79,6 +79,30 @@ public class ListItemIntegrationTests : IntegrationTestBase
     }
 
     [Fact]
+    public async Task ItemOperations_WhenRouteListDoesNotOwnItem_ReturnNotFound()
+    {
+        using var factory = new TodoApiFactory();
+        await factory.SeedAsync(context =>
+        {
+            var category = AddCategory(context, "Work", TodoApiFactory.TestUserId);
+            var itemList = AddList(context, "Item list", TodoApiFactory.TestUserId, category.Id);
+            AddList(context, "Route list", TodoApiFactory.TestUserId, category.Id);
+            AddItem(context, "Task", itemList.Id, TodoApiFactory.TestUserId);
+            return Task.CompletedTask;
+        });
+        using var client = factory.CreateApiClient();
+        await using var context = await CreateDbContextAsync(factory);
+        var routeListId = await context.Lists.Where(l => l.Name == "Route list").Select(l => l.Id).SingleAsync();
+        var itemId = await context.ListItems.Select(li => li.Id).SingleAsync();
+
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/api/lists/{routeListId}/items/{itemId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsJsonAsync($"/api/lists/{routeListId}/items/{itemId}/rename", new { Name = "New" })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsJsonAsync($"/api/lists/{routeListId}/items/{itemId}/due-date", new { DueDate = DateTime.UtcNow })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsync($"/api/lists/{routeListId}/items/{itemId}/toggle", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.DeleteAsync($"/api/lists/{routeListId}/items/{itemId}")).StatusCode);
+    }
+
+    [Fact]
     public async Task Create_WhenListIsNotOwnedByUser_ReturnsNotFound()
     {
         using var factory = new TodoApiFactory();

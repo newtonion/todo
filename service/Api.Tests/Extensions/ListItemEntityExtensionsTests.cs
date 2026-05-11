@@ -33,21 +33,6 @@ public class ListItemEntityExtensionsTests
     }
 
     [Fact]
-    public async Task WhereParent_WhenParentIdIsNull_DoesNotFilter()
-    {
-        var database = new TestDatabase();
-        await using var context = database.CreateContext();
-        var category = AddCategory(context, "Work", UserId);
-        var firstList = AddList(context, "Sprint", UserId, category.Id);
-        var secondList = AddList(context, "Inbox", UserId, category.Id);
-        AddItem(context, "First", firstList.Id, UserId);
-        AddItem(context, "Second", secondList.Id, UserId);
-        await context.SaveChangesAsync();
-
-        Assert.Equal(2, await context.ListItems.WhereParent(null).CountAsync());
-    }
-
-    [Fact]
     public async Task WhereParent_WhenParentIdIsProvided_FiltersByParent()
     {
         var database = new TestDatabase();

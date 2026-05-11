@@ -16,15 +16,15 @@ public interface IListItemService
 
     public Task<SearchResultsResponseModel<ListItemSearchResult>> SearchAsync(Guid userId, ListItemSearchCriteria criteria, CancellationToken cancellationToken = default);
 
-    public Task<ListItemGetResult> GetAsync(Guid userId, Guid itemId, CancellationToken cancellationToken = default);
+    public Task<ListItemGetResult> GetAsync(Guid userId, Guid listId, Guid itemId, CancellationToken cancellationToken = default);
 
-    public Task RenameAsync(Guid userId, Guid itemId, string name, CancellationToken cancellationToken = default);
+    public Task RenameAsync(Guid userId, Guid listId, Guid itemId, string name, CancellationToken cancellationToken = default);
 
-    public Task SetDueDateAsync(Guid userId, Guid itemId, DateTime? dueDate, CancellationToken cancellationToken = default);
+    public Task SetDueDateAsync(Guid userId, Guid listId, Guid itemId, DateTime? dueDate, CancellationToken cancellationToken = default);
 
-    public Task DeleteAsync(Guid userId, Guid itemId, CancellationToken cancellationToken = default);
+    public Task DeleteAsync(Guid userId, Guid listId, Guid itemId, CancellationToken cancellationToken = default);
 
-    public Task ToggleCompletionAsync(Guid userId, Guid itemId, CancellationToken cancellationToken = default);
+    public Task ToggleCompletionAsync(Guid userId, Guid listId, Guid itemId, CancellationToken cancellationToken = default);
 }
 
 public class ListItemService : IListItemService
@@ -114,12 +114,13 @@ public class ListItemService : IListItemService
         };
     }
 
-    public async Task<ListItemGetResult> GetAsync(Guid userId, Guid itemId, CancellationToken cancellationToken = default)
+    public async Task<ListItemGetResult> GetAsync(Guid userId, Guid listId, Guid itemId, CancellationToken cancellationToken = default)
     {
         await using var _dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         
         var item = await _dbContext.ListItems
             .WhereCurrentUserHasAccess(userId)
+            .WhereParent(listId)
             .Where(li => li.Id == itemId)
             .Select(li => new ListItemGetResult
             {
@@ -144,12 +145,13 @@ public class ListItemService : IListItemService
         return item;
     }
 
-    public async Task RenameAsync(Guid userId, Guid itemId, string name, CancellationToken cancellationToken = default)
+    public async Task RenameAsync(Guid userId, Guid listId, Guid itemId, string name, CancellationToken cancellationToken = default)
     {
         await using var _dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         
         var item = await _dbContext.ListItems
             .WhereCurrentUserHasAccess(userId)
+            .WhereParent(listId)
             .FirstOrDefaultAsync(li => li.Id == itemId, cancellationToken);
         
         if (item == null)
@@ -166,12 +168,13 @@ public class ListItemService : IListItemService
         _logger.LogInformation("Renamed list item {ItemId} to '{Name}' for user {UserId}", itemId, name, userId);
     }
 
-    public async Task SetDueDateAsync(Guid userId, Guid itemId, DateTime? dueDate, CancellationToken cancellationToken = default)
+    public async Task SetDueDateAsync(Guid userId, Guid listId, Guid itemId, DateTime? dueDate, CancellationToken cancellationToken = default)
     {
         await using var _dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         
         var item = await _dbContext.ListItems
             .WhereCurrentUserHasAccess(userId)
+            .WhereParent(listId)
             .FirstOrDefaultAsync(li => li.Id == itemId, cancellationToken);
         
         if (item == null)
@@ -187,12 +190,13 @@ public class ListItemService : IListItemService
         _logger.LogInformation("Set due date for list item {ItemId} to {DueDate} for user {UserId}", itemId, dueDate, userId);
     }
 
-    public async Task DeleteAsync(Guid userId, Guid itemId, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(Guid userId, Guid listId, Guid itemId, CancellationToken cancellationToken = default)
     {
         await using var _dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         
         var item = await _dbContext.ListItems
             .WhereCurrentUserHasAccess(userId)
+            .WhereParent(listId)
             .FirstOrDefaultAsync(li => li.Id == itemId, cancellationToken);
         
         if (item == null)
@@ -206,12 +210,13 @@ public class ListItemService : IListItemService
         _logger.LogInformation("Deleted list item {ItemId} for user {UserId}", itemId, userId);
     }
 
-    public async Task ToggleCompletionAsync(Guid userId, Guid itemId, CancellationToken cancellationToken = default)
+    public async Task ToggleCompletionAsync(Guid userId, Guid listId, Guid itemId, CancellationToken cancellationToken = default)
     {
         await using var _dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         
         var item = await _dbContext.ListItems
             .WhereCurrentUserHasAccess(userId)
+            .WhereParent(listId)
             .FirstOrDefaultAsync(li => li.Id == itemId, cancellationToken);
         
         if (item == null)

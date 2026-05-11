@@ -5,7 +5,7 @@ namespace Api.Models.Requests;
 
 public class ListItemSearchCriteria
 {
-    public Guid? ListId { get; set; }
+    public Guid ListId { get; set; }
     
     [StringLength(200, ErrorMessage = "Search text must be between 1 and 200 characters")]
     public string? Text { get; set; }
