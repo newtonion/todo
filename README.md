@@ -17,7 +17,7 @@ The API authenticates Clerk JWTs, creates or resolves the local user record per 
 - Correlation IDs are already included in error responses; a production deployment would send structured logs and metrics to centralized monitoring.
 
 ## Performance Improvements
-- As data grows, list/item queries should be reviewed with real query plans and supported with indexes aligned to ownership, parent list, due date, completion, and sort fields.
+- As data grows, list/item queries should be reviewed with real query plans/database and additional indexes should be added added.
 - The frontend is chatty and does not implement any caching for items it has locally. Since the lists are currently owned and manipulated by a single user, it makes sense to locally cache API results and mutate the cache when update/delete operations are called. This will also enable the list of lists to update more dynamically.
 
 
