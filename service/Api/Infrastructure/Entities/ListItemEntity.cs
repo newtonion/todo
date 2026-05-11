@@ -37,6 +37,6 @@ public class ListItemEntity: MutableEntity
         ["name"] = x => x.Name,
         ["status"] = x => 
             x.IsCompleted ? 0 : // completed
-                x.DueDate.HasValue && x.DueDate.Value < DateTime.UtcNow ? 1 : 2 // overdue : pending
+                x.DueDate.HasValue && x.DueDate.Value < DateTime.UtcNow.Date ? 1 : 2 // overdue : pending
     };
 }

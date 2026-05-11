@@ -9,5 +9,5 @@ public class ListSearchResult
     public string CategoryName { get; set; } = string.Empty;
     public bool IsCompleted { get; set; }
     public bool Archived { get; set; }
-    public DateTime SoonestDueDate { get; set; }
+    public DateTime? SoonestDueDate { get; set; }
 }

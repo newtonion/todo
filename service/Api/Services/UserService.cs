@@ -43,8 +43,25 @@ public class UserService : IUserService
             Name = "Unknown User" // Placeholder. This could be enhanced with a webhook, but Clerk gives the username to the front end where we need it.
         };
 
-        dbContext.Users.Add(newUser);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            dbContext.Users.Add(newUser);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            dbContext.Entry(newUser).State = EntityState.Detached;
+
+            var userCreatedByConcurrentRequest = await dbContext.Users
+                .FirstOrDefaultAsync(u => u.AuthId == authId, cancellationToken);
+
+            if (userCreatedByConcurrentRequest != null)
+            {
+                return userCreatedByConcurrentRequest.Id;
+            }
+
+            throw;
+        }
 
         _logger.LogInformation("Created new user {UserId} for auth ID {AuthId}", newUser.Id, authId);
 

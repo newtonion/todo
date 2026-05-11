@@ -193,7 +193,7 @@ public class ListService : IListService
                     .Where(i => i.ParentId == l.Id && i.DueDate != null && !i.IsCompleted)
                     .OrderBy(i => i.DueDate)
                     .Select(i => i.DueDate)
-                    .FirstOrDefault() ?? DateTime.MaxValue
+                    .FirstOrDefault()
             })
             .ToListAsync(cancellationToken);
 

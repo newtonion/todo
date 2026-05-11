@@ -1,4 +1,5 @@
 using Api.Infrastructure.Extensions;
+using Api.Infrastructure.Entities;
 using Api.Models.Requests;
 using Api.Tests.TestSupport;
 using Microsoft.EntityFrameworkCore;
@@ -87,5 +88,30 @@ public class ListItemEntityExtensionsTests
             .ToListAsync();
 
         Assert.Equal(["Alpha task", "Beta task"], names);
+    }
+
+    [Fact]
+    public async Task SortEntity_StatusTreatsSameDayDueDateAsPending()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var list = AddList(context, "Sprint", UserId, category.Id);
+        AddItem(context, "Completed", list.Id, UserId, isCompleted: true, dueDate: DateTime.UtcNow.AddDays(-1));
+        AddItem(context, "Overdue", list.Id, UserId, dueDate: DateTime.UtcNow.Date.AddDays(-1));
+        AddItem(context, "Today", list.Id, UserId, dueDate: DateTime.UtcNow.Date);
+        await context.SaveChangesAsync();
+
+        var names = await context.ListItems
+            .WhereParent(list.Id)
+            .SortEntity(
+            [
+                new FieldOrderRequest { Field = "status", Ascending = true },
+                new FieldOrderRequest { Field = "name", Ascending = true }
+            ], ListItemEntity.SortMappings)
+            .Select(li => li.Name)
+            .ToListAsync();
+
+        Assert.Equal(["Completed", "Overdue", "Today"], names);
     }
 }

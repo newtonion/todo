@@ -251,4 +251,28 @@ public class ListEntityExtensionsTests
         var name = Assert.Single(names);
         Assert.Equal("MixedItems", name);
     }
+
+    [Fact]
+    public async Task WhereUpcomingOrOverdue_WhenTrue_IgnoresCompletedDueItems()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var listWithCompletedDueItem = AddList(context, "CompletedDue", UserId, category.Id);
+        var listWithActiveDueItem = AddList(context, "ActiveDue", UserId, category.Id);
+        await context.SaveChangesAsync();
+
+        AddItem(context, "Completed due task", listWithCompletedDueItem.Id, UserId, isCompleted: true, dueDate: DateTime.UtcNow);
+        AddItem(context, "Active due task", listWithActiveDueItem.Id, UserId, dueDate: DateTime.UtcNow);
+        await context.SaveChangesAsync();
+
+        var names = await context.Lists
+            .Include(l => l.Children)
+            .WhereUpcomingOrOverdue(true)
+            .Select(l => l.Name)
+            .ToListAsync();
+
+        var name = Assert.Single(names);
+        Assert.Equal("ActiveDue", name);
+    }
 }

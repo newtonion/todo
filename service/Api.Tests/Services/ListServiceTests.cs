@@ -267,7 +267,7 @@ public class ListServiceTests
         Assert.Equal("Beta project", item.Name);
         Assert.Equal("Home", item.CategoryName);
         Assert.False(item.Archived);
-        Assert.Equal(betaDueDate, item.SoonestDueDate);
+        Assert.Null(item.SoonestDueDate);
         Assert.False(item.IsCompleted);
     }
 
