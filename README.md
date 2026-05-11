@@ -11,10 +11,20 @@ The repository is split into two applications:
 
 The API authenticates Clerk JWTs, creates or resolves the local user record per request, applies user ownership filters in the data layer, and runs EF Core migrations on startup outside the test environment. Swagger is enabled in development.
 
+## Scalability
+- The backend application cannot be scaled horizontally due to the SQLite backend.
+- Moving the backend persistence to PostgreSQL (or another database) will allow horizontal scaling of the service - multiple services can be spun up with a single database to process more requests (and the database will scale vertically).
+- Correlation IDs are already included in error responses; a production deployment would send structured logs and metrics to centralized monitoring.
+
+## Performance Improvements
+- As data grows, list/item queries should be reviewed with real query plans and supported with indexes aligned to ownership, parent list, due date, completion, and sort fields.
+- The frontend is chatty and does not implement any caching for items it has locally. Since the lists are currently owned and manipulated by a single user, it makes sense to locally cache API results and mutate the cache when update/delete operations are called. This will also enable the list of lists to update more dynamically.
+
+
 ## Decision Points
 
 - Authentication and user provisioning:
-  - For production-worthy auth it made sense to use a third-party. ([Clerk](https://clerk.com/)) provides an attractive offering with libraries and packages that can be easily integrated along with a prebuilt UI. Since we are using Clerk, a new user database record is created when the API is accessed with a new Clerk token. This can be fleshed out further to provide a full user profile and settings, and works well for now given the transient state of Sqlite.
+  - For production-worthy auth it made sense to use a third-party. ([Clerk](https://clerk.com/)) provides an attractive offering with libraries and packages that can be easily integrated along with a prebuilt UI. Since we are using Clerk, a new user database record is created when the API is accessed with a new Clerk token. This can be fleshed out further to provide a full user profile and settings, and works well for now given the transient state of SQLite.
 - Data ownership and access control:
   - Records are owned by their creators with no option for sharing. Ownership is enforced via a WhereCurrentUserHasAccess check in the database for user-created entities. Check could be easily expanded if a sharing mechanism was created.
   - Access is controlled via the auth Id on the Clerk token, which maps to a user Id. The middleware retrieves the Id from the database and provides that as user context.
@@ -36,6 +46,8 @@ The API authenticates Clerk JWTs, creates or resolves the local user record per 
   - The current swagger implementation requires you to log in to the front-end of the app and retrieve the token from a request. This is not ideal - flow here can be improved.
   - Manual testing of the API currently requires a real Clerk token. This can be improved by leveraging a local dev auth profile.
   - The frontend does not use routing, so individual lists cannot be bookmarked or linked. Given the single-workspace layout and the ability to complete or archive lists, the current navigation model is acceptable.
+  - The backend uses ASP.NET Core request limiting (`AddRateLimiter`) to limit requests to 100 per IP per minute. Once hosted in a production environment behind a gateway/load balancer, this rate limit should be applied at the gateway level.
+  - The frontend sidebar does not update until the user performs a refresh. The sidebar will become stale as the user changes the list items. When a local cache is implemented, this may be improved. As the frontend is already chatty, I did not want to initiate a new search call each time an item was updated.
 
 ## Prerequisites
 
