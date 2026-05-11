@@ -2,27 +2,11 @@ using Api.Config;
 using Api.Infrastructure;
 using Api.Middleware;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
-using System.Reflection;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "Todulip API",
-        Version = "v1",
-        Description = "A mothersday-weekend todo list manager"
-    });
-
-    // Include XML comments
-    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    c.IncludeXmlComments(xmlPath);
-});
+builder.Services.AddSwaggerDocumentation();
 
 // Rate limiting
 builder.Services.AddRateLimiter(options =>
