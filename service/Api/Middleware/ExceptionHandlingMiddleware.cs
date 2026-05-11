@@ -69,7 +69,7 @@ public class ExceptionHandlingMiddleware
             Title = GetTitle(statusCode),
         };
 
-        if (_environment.IsDevelopment())
+        if (_environment.IsDevelopment() && statusCode == HttpStatusCode.InternalServerError)
         {
             response.Debug = exception.ToString();
         }

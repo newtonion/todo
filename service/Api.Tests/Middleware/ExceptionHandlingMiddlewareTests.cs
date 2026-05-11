@@ -43,7 +43,7 @@ public class ExceptionHandlingMiddlewareTests
     }
 
     [Fact]
-    public async Task InvokeAsync_WhenEnvironmentIsDevelopment_IncludesDebugDetails()
+    public async Task InvokeAsync_WhenEnvironmentIsDevelopmentAndUnexpectedError_IncludesDebugDetails()
     {
         var context = CreateHttpContext();
         var middleware = new ExceptionHandlingMiddleware(
@@ -55,6 +55,22 @@ public class ExceptionHandlingMiddlewareTests
 
         var response = await ReadJsonResponseAsync(context);
         Assert.Contains("Something broke", response.RootElement.GetProperty("Debug").GetString());
+    }
+
+    [Fact]
+    public async Task InvokeAsync_WhenEnvironmentIsDevelopmentAndExpectedError_DoesNotIncludeDebugDetails()
+    {
+        var context = CreateHttpContext();
+        var middleware = new ExceptionHandlingMiddleware(
+            _ => throw new NotFoundException("List not found"),
+            NullLogger<ExceptionHandlingMiddleware>.Instance,
+            CreateEnvironment("Development"));
+
+        await middleware.InvokeAsync(context);
+
+        var response = await ReadJsonResponseAsync(context);
+        Assert.Equal(StatusCodes.Status404NotFound, context.Response.StatusCode);
+        Assert.Equal(JsonValueKind.Null, response.RootElement.GetProperty("Debug").ValueKind);
     }
 
     [Fact]
