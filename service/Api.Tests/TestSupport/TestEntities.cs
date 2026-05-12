@@ -64,7 +64,8 @@ public static class TestEntities
         bool isCompleted = false,
         DateTime? dueDate = null,
         int sortIndex = 0,
-        DateTime? createdOn = null)
+        DateTime? createdOn = null,
+        Guid? parentListItemId = null)
     {
         var item = new ListItemEntity
         {
@@ -75,7 +76,8 @@ public static class TestEntities
             DueDate = dueDate,
             SortIndex = sortIndex,
             CreatedOn = createdOn ?? DateTime.UtcNow,
-            UpdatedOn = DateTime.UtcNow
+            UpdatedOn = DateTime.UtcNow,
+            ParentListItemId = parentListItemId
         };
 
         context.ListItems.Add(item);

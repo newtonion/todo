@@ -33,7 +33,7 @@ namespace Api.Controllers
         public async Task<IActionResult> Create(Guid listId, [FromBody] CreateListItemRequest request)
         {
             var userId = GetUserId();
-            var newItemId = await _listItemService.CreateAsync(userId, listId, request.Name, request.DueDate);
+            var newItemId = await _listItemService.CreateAsync(userId, listId, request.ParentListItemId, request.Name, request.DueDate);
             return Ok(new { Id = newItemId });
         }
 
@@ -70,6 +70,24 @@ namespace Api.Controllers
         {
             var userId = GetUserId();
             var result = await _listItemService.GetAsync(userId, listId, itemId);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Gets the children of an item by ID
+        /// </summary>
+        /// <param name="listId">The list ID</param>
+        /// <param name="itemId">The item ID</param>
+        /// <returns>The children of the item</returns>
+        /// <response code="200">Returns the children</response>
+        /// <response code="404">If the item is not found</response>
+        [HttpGet("{itemId}/children")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetChildren(Guid listId, Guid itemId)
+        {
+            var userId = GetUserId();
+            var result = await _listItemService.GetChildrenAsync(userId, listId, itemId);
             return Ok(result);
         }
 

@@ -10,7 +10,8 @@ public static class ListItemEntityExtensions
     {
         return query
             .WhereCurrentUserHasAccess(userId)
-            .WhereParent(searchCriteria.ListId)
+            .WhereParentList(searchCriteria.ListId)
+            .WhereParentListItem(searchCriteria.ParentListItemId)
             .WhereName(searchCriteria.Text);
     }
 
@@ -19,9 +20,16 @@ public static class ListItemEntityExtensions
         return query.Where(li => li.OwnerId == userId);
     }
 
-    public static IQueryable<ListItemEntity> WhereParent(this IQueryable<ListItemEntity> query, Guid parentId)
+    public static IQueryable<ListItemEntity> WhereParentList(this IQueryable<ListItemEntity> query, Guid parentListId)
     {
-        return query.Where(li => li.ParentId == parentId);
+        return query.Where(li => li.ParentId == parentListId);
+    }
+
+    public static IQueryable<ListItemEntity> WhereParentListItem(this IQueryable<ListItemEntity> query, Guid? parentListItemId)
+    {
+        if (!parentListItemId.HasValue)
+            return query;
+        return query.Where(li => li.ParentListItemId == parentListItemId.Value);
     }
 
     public static IQueryable<ListItemEntity> WhereName(this IQueryable<ListItemEntity> query, string? nameCriteria)

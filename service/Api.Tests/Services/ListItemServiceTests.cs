@@ -29,7 +29,7 @@ public class ListItemServiceTests
         await context.SaveChangesAsync();
         var service = CreateService(database, validator.Object);
 
-        var itemId = await service.CreateAsync(UserId, list.Id, "Write tests", dueDate);
+        var itemId = await service.CreateAsync(UserId, list.Id, null, "Write tests", dueDate);
 
         var item = await context.ListItems.SingleAsync(li => li.Id == itemId);
         Assert.Equal(UserId, item.OwnerId);
@@ -56,7 +56,7 @@ public class ListItemServiceTests
         await context.SaveChangesAsync();
         var service = CreateService(database);
 
-        await Assert.ThrowsAsync<NotFoundException>(() => service.CreateAsync(UserId, otherUserList.Id, "Blocked", null));
+        await Assert.ThrowsAsync<NotFoundException>(() => service.CreateAsync(UserId, otherUserList.Id, null, "Blocked", null));
 
         Assert.Empty(await context.ListItems.ToListAsync());
     }
@@ -75,9 +75,99 @@ public class ListItemServiceTests
             .ThrowsAsync(new ValidationException("Invalid item"));
         var service = CreateService(database, validator.Object);
 
-        await Assert.ThrowsAsync<ValidationException>(() => service.CreateAsync(UserId, list.Id, " ", null));
+        await Assert.ThrowsAsync<ValidationException>(() => service.CreateAsync(UserId, list.Id, null, " ", null));
 
         Assert.Empty(await context.ListItems.ToListAsync());
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenParentListItemIdProvided_CreatesChildItem()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var list = AddList(context, "Sprint", UserId, category.Id);
+        var parentItem = AddItem(context, "Parent task", list.Id, UserId);
+        await context.SaveChangesAsync();
+        var service = CreateService(database);
+
+        var childItemId = await service.CreateAsync(UserId, list.Id, parentItem.Id, "Child task", null);
+
+        var childItem = await context.ListItems.SingleAsync(li => li.Id == childItemId);
+        Assert.Equal("Child task", childItem.Name);
+        Assert.Equal(list.Id, childItem.ParentId);
+        Assert.Equal(parentItem.Id, childItem.ParentListItemId);
+        Assert.Equal(UserId, childItem.OwnerId);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenParentListItemNotFound_ThrowsNotFoundException()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var list = AddList(context, "Sprint", UserId, category.Id);
+        await context.SaveChangesAsync();
+        var service = CreateService(database);
+
+        await Assert.ThrowsAsync<NotFoundException>(() => 
+            service.CreateAsync(UserId, list.Id, Guid.NewGuid(), "Child task", null));
+
+        Assert.Empty(await context.ListItems.ToListAsync());
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenParentListItemInDifferentList_ThrowsNotFoundException()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var list1 = AddList(context, "List 1", UserId, category.Id);
+        var list2 = AddList(context, "List 2", UserId, category.Id);
+        var parentItemInList1 = AddItem(context, "Parent in list 1", list1.Id, UserId);
+        await context.SaveChangesAsync();
+        var service = CreateService(database);
+
+        await Assert.ThrowsAsync<NotFoundException>(() => 
+            service.CreateAsync(UserId, list2.Id, parentItemInList1.Id, "Child task", null));
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenParentListItemNotOwnedByUser_ThrowsNotFoundException()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var list = AddList(context, "Sprint", UserId, category.Id);
+        var otherUserItem = AddItem(context, "Other user's item", list.Id, OtherUserId);
+        await context.SaveChangesAsync();
+        var service = CreateService(database);
+
+        await Assert.ThrowsAsync<NotFoundException>(() => 
+            service.CreateAsync(UserId, list.Id, otherUserItem.Id, "Child task", null));
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenParentHasMoreThan10Children_ThrowsValidationException()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var list = AddList(context, "Sprint", UserId, category.Id);
+        var parentItem = AddItem(context, "Parent task", list.Id, UserId);
+        await context.SaveChangesAsync();
+        
+        // Add 10 children
+        for (int i = 0; i < 10; i++)
+        {
+            AddItem(context, $"Child {i}", list.Id, UserId, parentListItemId: parentItem.Id);
+        }
+        await context.SaveChangesAsync();
+        var service = CreateService(database);
+
+        // Trying to add 11th child should fail
+        await Assert.ThrowsAsync<ValidationException>(() => 
+            service.CreateAsync(UserId, list.Id, parentItem.Id, "Child 11", null));
     }
 
     [Fact]
@@ -157,6 +247,170 @@ public class ListItemServiceTests
         var service = CreateService(database);
 
         await Assert.ThrowsAsync<NotFoundException>(() => service.GetAsync(UserId, list.Id, otherUserItem.Id));
+    }
+
+    [Fact]
+    public async Task GetAsync_WhenItemHasNoChildren_ReturnsEmptyChildFields()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var list = AddList(context, "Sprint", UserId, category.Id);
+        var item = AddItem(context, "Parent task", list.Id, UserId);
+        await context.SaveChangesAsync();
+        var service = CreateService(database);
+
+        var result = await service.GetAsync(UserId, list.Id, item.Id);
+
+        Assert.False(result.HasChildren);
+        Assert.Equal(0, result.TotalChildren);
+        Assert.Equal(0, result.TotalChildrenCompleted);
+        Assert.Null(result.SoonestChildDueDate);
+    }
+
+    [Fact]
+    public async Task GetAsync_WhenItemHasChildren_ReturnsChildAggregates()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var list = AddList(context, "Sprint", UserId, category.Id);
+        var parentItem = AddItem(context, "Parent task", list.Id, UserId);
+        await context.SaveChangesAsync();
+        
+        var dueDate1 = new DateTime(2026, 5, 15, 0, 0, 0, DateTimeKind.Utc);
+        var dueDate2 = new DateTime(2026, 5, 12, 0, 0, 0, DateTimeKind.Utc);
+        AddItem(context, "Child 1", list.Id, UserId, isCompleted: true, dueDate: dueDate1, parentListItemId: parentItem.Id);
+        AddItem(context, "Child 2", list.Id, UserId, isCompleted: false, dueDate: dueDate2, parentListItemId: parentItem.Id);
+        AddItem(context, "Child 3", list.Id, UserId, isCompleted: true, parentListItemId: parentItem.Id);
+        await context.SaveChangesAsync();
+        var service = CreateService(database);
+
+        var result = await service.GetAsync(UserId, list.Id, parentItem.Id);
+
+        Assert.True(result.HasChildren);
+        Assert.Equal(3, result.TotalChildren);
+        Assert.Equal(2, result.TotalChildrenCompleted);
+        Assert.Equal(dueDate1, result.SoonestChildDueDate);
+    }
+
+    [Fact]
+    public async Task GetAsync_WhenChildrenHaveNoDueDates_ReturnsSoonestChildDueDateAsNull()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var list = AddList(context, "Sprint", UserId, category.Id);
+        var parentItem = AddItem(context, "Parent task", list.Id, UserId);
+        await context.SaveChangesAsync();
+        
+        AddItem(context, "Child 1", list.Id, UserId, parentListItemId: parentItem.Id);
+        AddItem(context, "Child 2", list.Id, UserId, parentListItemId: parentItem.Id);
+        await context.SaveChangesAsync();
+        var service = CreateService(database);
+
+        var result = await service.GetAsync(UserId, list.Id, parentItem.Id);
+
+        Assert.True(result.HasChildren);
+        Assert.Equal(2, result.TotalChildren);
+        Assert.Null(result.SoonestChildDueDate);
+    }
+
+    [Fact]
+    public async Task GetChildrenAsync_ReturnsAllChildrenOfParentItem()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var list = AddList(context, "Sprint", UserId, category.Id);
+        var parentItem = AddItem(context, "Parent task", list.Id, UserId);
+        await context.SaveChangesAsync();
+        
+        var dueDate = new DateTime(2026, 5, 15, 0, 0, 0, DateTimeKind.Utc);
+        var child1 = AddItem(context, "Child 1", list.Id, UserId, isCompleted: true, dueDate: dueDate, sortIndex: 1, parentListItemId: parentItem.Id);
+        var child2 = AddItem(context, "Child 2", list.Id, UserId, isCompleted: false, sortIndex: 2, parentListItemId: parentItem.Id);
+        AddItem(context, "Other item", list.Id, UserId);
+        await context.SaveChangesAsync();
+        var service = CreateService(database);
+
+        var result = await service.GetChildrenAsync(UserId, list.Id, parentItem.Id);
+
+        Assert.Equal(2, result.Count);
+        var firstChild = result.First(c => c.Id == child1.Id);
+        Assert.Equal("Child 1", firstChild.Name);
+        Assert.True(firstChild.IsCompleted);
+        Assert.Equal(dueDate, firstChild.DueDate);
+        Assert.Equal(1, firstChild.SortIndex);
+        Assert.Equal(list.Id, firstChild.ParentId);
+        Assert.Equal("Sprint", firstChild.ParentName);
+        Assert.Equal("Work", firstChild.CategoryName);
+        
+        var secondChild = result.First(c => c.Id == child2.Id);
+        Assert.Equal("Child 2", secondChild.Name);
+        Assert.False(secondChild.IsCompleted);
+        Assert.Equal(2, secondChild.SortIndex);
+    }
+
+    [Fact]
+    public async Task GetChildrenAsync_WhenParentItemHasNoChildren_ThrowsNotFoundException()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var list = AddList(context, "Sprint", UserId, category.Id);
+        var parentItem = AddItem(context, "Parent task", list.Id, UserId);
+        await context.SaveChangesAsync();
+        var service = CreateService(database);
+
+        await Assert.ThrowsAsync<NotFoundException>(() => service.GetChildrenAsync(UserId, list.Id, parentItem.Id));
+    }
+
+    [Fact]
+    public async Task GetChildrenAsync_WhenParentItemNotFound_ThrowsNotFoundException()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var list = AddList(context, "Sprint", UserId, category.Id);
+        await context.SaveChangesAsync();
+        var service = CreateService(database);
+
+        await Assert.ThrowsAsync<NotFoundException>(() => service.GetChildrenAsync(UserId, list.Id, Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task GetChildrenAsync_WhenUserDoesNotOwnParent_ThrowsNotFoundException()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var list = AddList(context, "Sprint", UserId, category.Id);
+        var otherUserItem = AddItem(context, "Other parent", list.Id, OtherUserId);
+        await context.SaveChangesAsync();
+        
+        AddItem(context, "Child", list.Id, OtherUserId, parentListItemId: otherUserItem.Id);
+        await context.SaveChangesAsync();
+        var service = CreateService(database);
+
+        await Assert.ThrowsAsync<NotFoundException>(() => service.GetChildrenAsync(UserId, list.Id, otherUserItem.Id));
+    }
+
+    [Fact]
+    public async Task GetChildrenAsync_WhenParentIsInDifferentList_ThrowsNotFoundException()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var list1 = AddList(context, "List 1", UserId, category.Id);
+        var list2 = AddList(context, "List 2", UserId, category.Id);
+        var parentItem = AddItem(context, "Parent", list1.Id, UserId);
+        await context.SaveChangesAsync();
+        
+        AddItem(context, "Child", list1.Id, UserId, parentListItemId: parentItem.Id);
+        await context.SaveChangesAsync();
+        var service = CreateService(database);
+
+        await Assert.ThrowsAsync<NotFoundException>(() => service.GetChildrenAsync(UserId, list2.Id, parentItem.Id));
     }
 
     [Fact]

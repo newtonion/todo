@@ -14,4 +14,8 @@ public class ListItemGetResult
     public string CategoryName { get; set; } = string.Empty;
     public DateTime CreatedOn { get; set; }
     public DateTime UpdatedOn { get; set; }
+    public bool HasChildren { get; set; }
+    public int TotalChildren {get; set;}
+    public int TotalChildrenCompleted {get; set;}
+    public DateTime? SoonestChildDueDate { get; set; }
 }

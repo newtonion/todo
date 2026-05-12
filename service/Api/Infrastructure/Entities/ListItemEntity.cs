@@ -17,6 +17,9 @@ public class ListItemEntity: MutableEntity
 
     [ForeignKey("Parent")]
     public Guid ParentId { get; set; }
+    
+    [ForeignKey("ParentListItem")]
+    public Guid? ParentListItemId { get; set; }
     public int SortIndex {get; set;}
     
     [MaxLength(MaxNameLength)]
@@ -24,7 +27,9 @@ public class ListItemEntity: MutableEntity
 
     // Navigation properties
     public virtual ListEntity Parent { get; set; } = null!;
+    public virtual ListItemEntity? ParentListItem { get; set; } = null!;
     public virtual UserEntity Owner {get; set;} = null!;
+    public virtual ICollection<ListItemEntity> Children { get; set; } = new List<ListItemEntity>();
 
     // Mappings for sorting
     public static readonly Dictionary<string, Expression<Func<ListItemEntity, object>>> SortMappings =
