@@ -28,7 +28,8 @@ public static class ListItemEntityExtensions
     public static IQueryable<ListItemEntity> WhereParentListItem(this IQueryable<ListItemEntity> query, Guid? parentListItemId)
     {
         if (!parentListItemId.HasValue)
-            return query;
+            return query.Where(li => li.ParentListItemId == null);
+
         return query.Where(li => li.ParentListItemId == parentListItemId.Value);
     }
 

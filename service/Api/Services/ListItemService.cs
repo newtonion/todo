@@ -127,6 +127,11 @@ public class ListItemService : IListItemService
                 Name = li.Name,
                 IsCompleted = li.IsCompleted,
                 DueDate = li.DueDate,
+                TotalChildren = li.Children.Count(),
+                TotalChildrenCompleted = li.Children.Count(c => c.IsCompleted),
+                SoonestChildDueDate = li.Children
+                    .Where(c => c.DueDate != null)
+                    .Min(c => c.DueDate),
             })
             .ToListAsync(cancellationToken);
 
@@ -164,7 +169,7 @@ public class ListItemService : IListItemService
                 TotalChildrenCompleted = li.Children.Count(c => c.IsCompleted),
                 SoonestChildDueDate = li.Children
                     .Where(c => c.DueDate != null)
-                    .Max(c => c.DueDate)
+                    .Min(c => c.DueDate)
             })
             .FirstOrDefaultAsync(cancellationToken);
         
@@ -197,7 +202,13 @@ public class ListItemService : IListItemService
                     ParentName = child.Parent.Name,
                     CategoryName = child.Parent.Category != null ? child.Parent.Category.Name : string.Empty,
                     CreatedOn = child.CreatedOn,
-                    UpdatedOn = child.UpdatedOn
+                    UpdatedOn = child.UpdatedOn,
+                    HasChildren = child.Children.Any(),
+                    TotalChildren = child.Children.Count(),
+                    TotalChildrenCompleted = child.Children.Count(c => c.IsCompleted),
+                    SoonestChildDueDate = child.Children
+                        .Where(c => c.DueDate != null)
+                        .Min(c => c.DueDate)
                 })
             .ToListAsync(cancellationToken);
         

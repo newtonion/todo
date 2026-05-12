@@ -180,10 +180,14 @@ public class ListItemServiceTests
         var otherList = AddList(context, "Inbox", UserId, category.Id);
         AddItem(context, "Alpha task", list.Id, UserId, sortIndex: 1);
         var dueDate = new DateTime(2026, 5, 17, 0, 0, 0, DateTimeKind.Utc);
-        AddItem(context, "Beta task", list.Id, UserId, isCompleted: true, dueDate: dueDate, sortIndex: 2);
+        var betaTask = AddItem(context, "Beta task", list.Id, UserId, isCompleted: true, dueDate: dueDate, sortIndex: 2);
         AddItem(context, "Gamma task", list.Id, UserId, sortIndex: 3);
         AddItem(context, "Other parent task", otherList.Id, UserId, sortIndex: 4);
         AddItem(context, "Other user task", list.Id, OtherUserId, sortIndex: 5);
+        await context.SaveChangesAsync();
+        var soonestChildDueDate = new DateTime(2026, 5, 12, 0, 0, 0, DateTimeKind.Utc);
+        AddItem(context, "Beta child 1", list.Id, UserId, isCompleted: true, dueDate: new DateTime(2026, 5, 14, 0, 0, 0, DateTimeKind.Utc), parentListItemId: betaTask.Id);
+        AddItem(context, "Beta child 2", list.Id, UserId, dueDate: soonestChildDueDate, parentListItemId: betaTask.Id);
         await context.SaveChangesAsync();
         var service = CreateService(database);
 
@@ -207,6 +211,9 @@ public class ListItemServiceTests
         Assert.Equal("Beta task", item.Name);
         Assert.True(item.IsCompleted);
         Assert.Equal(dueDate, item.DueDate);
+        Assert.Equal(2, item.TotalChildren);
+        Assert.Equal(1, item.TotalChildrenCompleted);
+        Assert.Equal(soonestChildDueDate, item.SoonestChildDueDate);
     }
 
     [Fact]
@@ -291,7 +298,7 @@ public class ListItemServiceTests
         Assert.True(result.HasChildren);
         Assert.Equal(3, result.TotalChildren);
         Assert.Equal(2, result.TotalChildrenCompleted);
-        Assert.Equal(dueDate1, result.SoonestChildDueDate);
+        Assert.Equal(dueDate2, result.SoonestChildDueDate);
     }
 
     [Fact]

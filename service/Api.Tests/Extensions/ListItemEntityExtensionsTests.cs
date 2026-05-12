@@ -101,7 +101,7 @@ public class ListItemEntityExtensionsTests
     }
 
     [Fact]
-    public async Task WhereParentListItem_WhenNullIsProvided_ReturnsAllItems()
+    public async Task WhereParentListItem_WhenNullIsProvided_ReturnsRootItems()
     {
         var database = new TestDatabase();
         await using var context = database.CreateContext();
@@ -119,7 +119,7 @@ public class ListItemEntityExtensionsTests
             .Select(li => li.Name)
             .ToListAsync();
 
-        Assert.Equal(["Child", "Parent", "Standalone"], names);
+        Assert.Equal(["Parent", "Standalone"], names);
     }
 
     [Fact]
