@@ -111,7 +111,7 @@ namespace Api.Migrations
                     b.Property<Guid>("ParentId")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("ParentListItemId")
+                    b.Property<Guid?>("ParentListItemId")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SortIndex")
