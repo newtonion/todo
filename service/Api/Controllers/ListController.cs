@@ -54,11 +54,11 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Gets a list by ID
+        /// Pulls back a list in a format optimized for printing
         /// </summary>
         /// <param name="id">The list ID</param>
         /// <param name="request">Print options including sort order</param>
-        /// <returns>The list details including items</returns>
+        /// <returns>A list ready for printing</returns>
         /// <response code="200">Returns the list</response>
         /// <response code="404">If the list is not found</response>
         [HttpGet("{id}/print")]

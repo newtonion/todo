@@ -129,9 +129,18 @@ public class ListItemService : IListItemService
                 Name = li.Name,
                 IsCompleted = li.IsCompleted,
                 DueDate = li.DueDate,
-                TotalChildren = li.Children.Count(),
-                TotalChildrenCompleted = li.Children.Count(c => c.IsCompleted),
-                SoonestChildDueDate = li.Children
+                TotalChildren = _dbContext.ListItems
+                    .WhereCurrentUserHasAccess(userId)
+                    .WhereParentList(criteria.ListId)
+                    .Count(c => c.ParentListItemId == li.Id),
+                TotalChildrenCompleted = _dbContext.ListItems
+                    .WhereCurrentUserHasAccess(userId)
+                    .WhereParentList(criteria.ListId)
+                    .Count(c => c.ParentListItemId == li.Id && c.IsCompleted),
+                SoonestChildDueDate = _dbContext.ListItems
+                    .WhereCurrentUserHasAccess(userId)
+                    .WhereParentList(criteria.ListId)
+                    .Where(c => c.ParentListItemId == li.Id)
                     .Where(c => c.DueDate != null)
                     .Min(c => c.DueDate),
             })
@@ -166,10 +175,22 @@ public class ListItemService : IListItemService
                 CategoryName = li.Parent.Category != null ? li.Parent.Category.Name : string.Empty,
                 CreatedOn = li.CreatedOn,
                 UpdatedOn = li.UpdatedOn,
-                HasChildren = li.Children.Any(),
-                TotalChildren = li.Children.Count(),
-                TotalChildrenCompleted = li.Children.Count(c => c.IsCompleted),
-                SoonestChildDueDate = li.Children
+                HasChildren = _dbContext.ListItems
+                    .WhereCurrentUserHasAccess(userId)
+                    .WhereParentList(listId)
+                    .Any(c => c.ParentListItemId == li.Id),
+                TotalChildren = _dbContext.ListItems
+                    .WhereCurrentUserHasAccess(userId)
+                    .WhereParentList(listId)
+                    .Count(c => c.ParentListItemId == li.Id),
+                TotalChildrenCompleted = _dbContext.ListItems
+                    .WhereCurrentUserHasAccess(userId)
+                    .WhereParentList(listId)
+                    .Count(c => c.ParentListItemId == li.Id && c.IsCompleted),
+                SoonestChildDueDate = _dbContext.ListItems
+                    .WhereCurrentUserHasAccess(userId)
+                    .WhereParentList(listId)
+                    .Where(c => c.ParentListItemId == li.Id)
                     .Where(c => c.DueDate != null)
                     .Min(c => c.DueDate)
             })
@@ -187,13 +208,22 @@ public class ListItemService : IListItemService
     {
         await using var _dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         
+        var parentExists = await _dbContext.ListItems
+            .WhereCurrentUserHasAccess(userId)
+            .WhereParentList(listId)
+            .AnyAsync(li => li.Id == itemId, cancellationToken);
+
+        if (!parentExists)
+        {
+            throw new NotFoundException($"List item {itemId} not found or access denied");
+        }
+
         var item = await _dbContext.ListItems
             .WhereCurrentUserHasAccess(userId)
             .WhereParentList(listId)
-            .Where(li => li.Id == itemId)
-            .SelectMany(li => li.Children)
+            .Where(child => child.ParentListItemId == itemId)
             .Select(child =>
-             new ListItemGetResult
+                new ListItemGetResult
                 {
                     Id = child.Id,
                     Name = child.Name,
@@ -205,10 +235,22 @@ public class ListItemService : IListItemService
                     CategoryName = child.Parent.Category != null ? child.Parent.Category.Name : string.Empty,
                     CreatedOn = child.CreatedOn,
                     UpdatedOn = child.UpdatedOn,
-                    HasChildren = child.Children.Any(),
-                    TotalChildren = child.Children.Count(),
-                    TotalChildrenCompleted = child.Children.Count(c => c.IsCompleted),
-                    SoonestChildDueDate = child.Children
+                    HasChildren = _dbContext.ListItems
+                        .WhereCurrentUserHasAccess(userId)
+                        .WhereParentList(listId)
+                        .Any(c => c.ParentListItemId == child.Id),
+                    TotalChildren = _dbContext.ListItems
+                        .WhereCurrentUserHasAccess(userId)
+                        .WhereParentList(listId)
+                        .Count(c => c.ParentListItemId == child.Id),
+                    TotalChildrenCompleted = _dbContext.ListItems
+                        .WhereCurrentUserHasAccess(userId)
+                        .WhereParentList(listId)
+                        .Count(c => c.ParentListItemId == child.Id && c.IsCompleted),
+                    SoonestChildDueDate = _dbContext.ListItems
+                        .WhereCurrentUserHasAccess(userId)
+                        .WhereParentList(listId)
+                        .Where(c => c.ParentListItemId == child.Id)
                         .Where(c => c.DueDate != null)
                         .Min(c => c.DueDate)
                 })

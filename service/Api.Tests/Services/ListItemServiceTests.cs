@@ -230,6 +230,8 @@ public class ListItemServiceTests
         var soonestChildDueDate = new DateTime(2026, 5, 12, 0, 0, 0, DateTimeKind.Utc);
         AddItem(context, "Beta child 1", list.Id, UserId, isCompleted: true, dueDate: new DateTime(2026, 5, 14, 0, 0, 0, DateTimeKind.Utc), parentListItemId: betaTask.Id);
         AddItem(context, "Beta child 2", list.Id, UserId, dueDate: soonestChildDueDate, parentListItemId: betaTask.Id);
+        AddItem(context, "Cross-list child", otherList.Id, UserId, isCompleted: true, dueDate: new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc), parentListItemId: betaTask.Id);
+        AddItem(context, "Other-user child", list.Id, OtherUserId, isCompleted: true, dueDate: new DateTime(2026, 5, 2, 0, 0, 0, DateTimeKind.Utc), parentListItemId: betaTask.Id);
         await context.SaveChangesAsync();
         var service = CreateService(database);
 
@@ -324,6 +326,7 @@ public class ListItemServiceTests
         await using var context = database.CreateContext();
         var category = AddCategory(context, "Work", UserId);
         var list = AddList(context, "Sprint", UserId, category.Id);
+        var otherList = AddList(context, "Backlog", UserId, category.Id);
         var parentItem = AddItem(context, "Parent task", list.Id, UserId);
         await context.SaveChangesAsync();
         
@@ -332,6 +335,8 @@ public class ListItemServiceTests
         AddItem(context, "Child 1", list.Id, UserId, isCompleted: true, dueDate: dueDate1, parentListItemId: parentItem.Id);
         AddItem(context, "Child 2", list.Id, UserId, isCompleted: false, dueDate: dueDate2, parentListItemId: parentItem.Id);
         AddItem(context, "Child 3", list.Id, UserId, isCompleted: true, parentListItemId: parentItem.Id);
+        AddItem(context, "Cross-list child", otherList.Id, UserId, isCompleted: true, dueDate: new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc), parentListItemId: parentItem.Id);
+        AddItem(context, "Other-user child", list.Id, OtherUserId, isCompleted: true, dueDate: new DateTime(2026, 5, 2, 0, 0, 0, DateTimeKind.Utc), parentListItemId: parentItem.Id);
         await context.SaveChangesAsync();
         var service = CreateService(database);
 
@@ -372,6 +377,7 @@ public class ListItemServiceTests
         await using var context = database.CreateContext();
         var category = AddCategory(context, "Work", UserId);
         var list = AddList(context, "Sprint", UserId, category.Id);
+        var otherList = AddList(context, "Backlog", UserId, category.Id);
         var parentItem = AddItem(context, "Parent task", list.Id, UserId);
         await context.SaveChangesAsync();
         
@@ -379,6 +385,11 @@ public class ListItemServiceTests
         var child1 = AddItem(context, "Child 1", list.Id, UserId, isCompleted: true, dueDate: dueDate, sortIndex: 1, parentListItemId: parentItem.Id);
         var child2 = AddItem(context, "Child 2", list.Id, UserId, isCompleted: false, sortIndex: 2, parentListItemId: parentItem.Id);
         AddItem(context, "Other item", list.Id, UserId);
+        AddItem(context, "Cross-list child", otherList.Id, UserId, parentListItemId: parentItem.Id);
+        AddItem(context, "Other-user child", list.Id, OtherUserId, parentListItemId: parentItem.Id);
+        AddItem(context, "Grandchild", list.Id, UserId, isCompleted: true, dueDate: new DateTime(2026, 5, 14, 0, 0, 0, DateTimeKind.Utc), parentListItemId: child1.Id);
+        AddItem(context, "Cross-list grandchild", otherList.Id, UserId, isCompleted: true, dueDate: new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc), parentListItemId: child1.Id);
+        AddItem(context, "Other-user grandchild", list.Id, OtherUserId, isCompleted: true, dueDate: new DateTime(2026, 5, 2, 0, 0, 0, DateTimeKind.Utc), parentListItemId: child1.Id);
         await context.SaveChangesAsync();
         var service = CreateService(database);
 
@@ -393,6 +404,10 @@ public class ListItemServiceTests
         Assert.Equal(list.Id, firstChild.ParentId);
         Assert.Equal("Sprint", firstChild.ParentName);
         Assert.Equal("Work", firstChild.CategoryName);
+        Assert.True(firstChild.HasChildren);
+        Assert.Equal(1, firstChild.TotalChildren);
+        Assert.Equal(1, firstChild.TotalChildrenCompleted);
+        Assert.Equal(new DateTime(2026, 5, 14, 0, 0, 0, DateTimeKind.Utc), firstChild.SoonestChildDueDate);
         
         var secondChild = result.First(c => c.Id == child2.Id);
         Assert.Equal("Child 2", secondChild.Name);
