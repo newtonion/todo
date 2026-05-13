@@ -148,6 +148,22 @@ public class ListItemServiceTests
     }
 
     [Fact]
+    public async Task CreateAsync_WhenParentListItemIsChild_ThrowsNotFoundException()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var list = AddList(context, "Sprint", UserId, category.Id);
+        var parentItem = AddItem(context, "Parent task", list.Id, UserId);
+        var childItem = AddItem(context, "Child task", list.Id, UserId, parentListItemId: parentItem.Id);
+        await context.SaveChangesAsync();
+        var service = CreateService(database);
+
+        await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.CreateAsync(UserId, list.Id, childItem.Id, "Nested child task", null));
+    }
+
+    [Fact]
     public async Task CreateAsync_WhenParentHasMoreThan10Children_ThrowsValidationException()
     {
         var database = new TestDatabase();
@@ -168,6 +184,32 @@ public class ListItemServiceTests
         // Trying to add 11th child should fail
         await Assert.ThrowsAsync<ValidationException>(() => 
             service.CreateAsync(UserId, list.Id, parentItem.Id, "Child 11", null));
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenUnrelatedRowsReferenceParentListItemId_DoesNotCountThemAgainstChildLimit()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var list = AddList(context, "Sprint", UserId, category.Id);
+        var otherList = AddList(context, "Backlog", UserId, category.Id);
+        var parentItem = AddItem(context, "Parent task", list.Id, UserId);
+        await context.SaveChangesAsync();
+
+        for (int i = 0; i < 10; i++)
+        {
+            AddItem(context, $"Inconsistent child {i}", otherList.Id, UserId, parentListItemId: parentItem.Id);
+        }
+        await context.SaveChangesAsync();
+        var service = CreateService(database);
+
+        var childId = await service.CreateAsync(UserId, list.Id, parentItem.Id, "Valid child", null);
+
+        var child = await context.ListItems.SingleAsync(li => li.Id == childId);
+        Assert.Equal(list.Id, child.ParentId);
+        Assert.Equal(UserId, child.OwnerId);
+        Assert.Equal(parentItem.Id, child.ParentListItemId);
     }
 
     [Fact]

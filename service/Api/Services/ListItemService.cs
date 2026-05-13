@@ -56,7 +56,7 @@ public class ListItemService : IListItemService
         var listItemParentExists = listItemParentId == null ? true : await _dbContext.ListItems
             .WhereCurrentUserHasAccess(userId)
             .WhereParentList(listId)
-            .AnyAsync(li => li.Id == listItemParentId.Value, cancellationToken);
+            .AnyAsync(li => li.Id == listItemParentId.Value && li.ParentListItemId == null, cancellationToken);
         
         if (!listExists)
         {
@@ -71,6 +71,8 @@ public class ListItemService : IListItemService
         if (listItemParentId.HasValue)
         {
             var childrenCount = await _dbContext.ListItems
+                .WhereCurrentUserHasAccess(userId)
+                .WhereParentList(listId)
                 .Where(li => li.ParentListItemId == listItemParentId.Value)
                 .CountAsync(cancellationToken);
             
@@ -210,9 +212,10 @@ public class ListItemService : IListItemService
                         .Where(c => c.DueDate != null)
                         .Min(c => c.DueDate)
                 })
+            .OrderBy(c => c.SortIndex).ThenBy(c => c.Id)
             .ToListAsync(cancellationToken);
         
-        if (item == null || !item.Any())
+        if (!item.Any())
         {
             throw new NotFoundException($"List item {itemId} not found or access denied");
         }

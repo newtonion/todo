@@ -198,8 +198,7 @@ namespace Api.Migrations
                     b.HasOne("Api.Infrastructure.Entities.ListItemEntity", "ParentListItem")
                         .WithMany("Children")
                         .HasForeignKey("ParentListItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Owner");
 

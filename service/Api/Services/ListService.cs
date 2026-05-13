@@ -265,10 +265,11 @@ public class ListService : IListService
             })
             .ToListAsync(cancellationToken);
         
-        // Fetch all subitems
+        var parentItemIds = parentItems.Select(i => i.Id).ToList();
+
         var subItems = await _dbContext.ListItems
             .WhereCurrentUserHasAccess(userId)
-            .Where(i => i.ParentId == listId && i.ParentListItemId != null)
+            .Where(i => i.ParentId == listId && i.ParentListItemId != null && parentItemIds.Contains(i.ParentListItemId.Value))
             .Select(i => new
             {
                 i.Id,
@@ -276,7 +277,7 @@ public class ListService : IListService
                 i.IsCompleted,
                 i.ParentListItemId
             })
-            .OrderBy(x=> x.Id)
+            .OrderBy(x => x.Id)
             .ToListAsync(cancellationToken);
         
         // Group subitems by parent

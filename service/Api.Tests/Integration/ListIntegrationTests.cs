@@ -374,6 +374,35 @@ public class ListIntegrationTests : IntegrationTestBase
     }
 
     [Fact]
+    public async Task Print_ListWithNestedSubItems_OnlyReturnsDirectSubItems()
+    {
+        using var factory = new TodoApiFactory();
+        await factory.SeedAsync(context =>
+        {
+            var list = AddList(context, "Nested Tasks", TodoApiFactory.TestUserId, null);
+            var parent = AddItem(context, "Parent task", list.Id, TodoApiFactory.TestUserId);
+            var directSubItem = AddItem(context, "Direct subtask", list.Id, TodoApiFactory.TestUserId, parentListItemId: parent.Id);
+            AddItem(context, "Nested subtask", list.Id, TodoApiFactory.TestUserId, parentListItemId: directSubItem.Id);
+
+            return Task.CompletedTask;
+        });
+        using var client = factory.CreateApiClient();
+        await using var context = await CreateDbContextAsync(factory);
+        var listId = await context.Lists.Select(l => l.Id).SingleAsync();
+
+        var response = await client.GetAsync($"/api/list/{listId}/print");
+
+        response.EnsureSuccessStatusCode();
+        using var json = await ReadJsonAsync(response);
+        var item = Assert.Single(GetProperty(json.RootElement, "items").EnumerateArray());
+        var subItem = Assert.Single(GetProperty(item, "subItems").EnumerateArray());
+
+        Assert.Equal("Parent task", GetString(item, "name"));
+        Assert.Equal("Direct subtask", GetString(subItem, "name"));
+        Assert.Empty(GetProperty(subItem, "subItems").EnumerateArray());
+    }
+
+    [Fact]
     public async Task Print_NonExistentList_ReturnsNotFound()
     {
         using var factory = new TodoApiFactory();
@@ -556,4 +585,3 @@ public class ListIntegrationTests : IntegrationTestBase
         Assert.Equal("A Subtask", GetString(subItems[1], "name"));
     }
 }
-
