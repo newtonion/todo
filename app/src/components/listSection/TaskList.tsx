@@ -1,5 +1,6 @@
 import type { ListItemSearchResult } from '../../api/lists/models';
-import { AddIconButton } from '../shared/IconButtons';
+import { faFileLines } from '@fortawesome/free-solid-svg-icons';
+import { AddIconButton, IconButton } from '../shared/IconButtons';
 import Table, { type SortDirection, type TaskSortField } from './Table';
 import TaskCreateModal from '../sidebar/TaskCreateModal';
 import './TaskList.css';
@@ -12,7 +13,9 @@ type TaskListProps = {
   taskSortDirection: SortDirection;
   totalTaskCount: number;
   isCreateTaskModalOpen: boolean;
+  isPrintingList: boolean;
   onAddTaskClick: () => void;
+  onPrintList: () => void | Promise<void>;
   onCloseCreateModal: () => void;
   onCreateTask: (name: string, dueDate?: string) => Promise<void>;
   onSaveTaskName: (item: ListItemSearchResult, name: string) => Promise<void>;
@@ -34,7 +37,9 @@ const TaskList = ({
   taskSortDirection,
   totalTaskCount,
   isCreateTaskModalOpen,
+  isPrintingList,
   onAddTaskClick,
+  onPrintList,
   onCloseCreateModal,
   onCreateTask,
   onSaveTaskName,
@@ -50,10 +55,20 @@ const TaskList = ({
   return (
     <>
       <div className="main-page-table-header">
-        <AddIconButton
-          ariaLabel="Add a list item"
-          onClick={onAddTaskClick}
+        <IconButton
+          ariaLabel="Create printable task sheet"
+          className="task-list-print-button"
+          disabled={isPrintingList}
+          icon={faFileLines}
+          title="Create printable task sheet"
+          onClick={onPrintList}
         />
+        <div className="main-page-table-header-actions">
+          <AddIconButton
+            ariaLabel="Add a list item"
+            onClick={onAddTaskClick}
+          />
+        </div>
       </div>
       <Table
         items={items}

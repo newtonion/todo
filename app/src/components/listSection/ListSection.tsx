@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useListApi } from '../../api/lists/useListApi';
 import type { CountListResult, GetListResult, ListItemSearchResult } from '../../api/lists/models';
+import { writePrintableListSheet } from '../../utils/printListSheet';
 import { useListHeader } from '../hooks/useListHeader';
 import ListHeader from './ListHeader';
 import TaskList from './TaskList';
@@ -27,6 +28,7 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
     createListItem,
     getListItemChildren,
     getList,
+    printList,
     renameList,
     renameListItem,
     searchListItems,
@@ -39,6 +41,7 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
   } = useListApi();
   const [loadState, setLoadState] = useState<ListLoadState | null>(null);
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
+  const [isPrintingList, setIsPrintingList] = useState(false);
   const [taskSortField, setTaskSortField] = useState<TaskSortField>('dueDate');
   const [taskSortDirection, setTaskSortDirection] = useState<SortDirection>('asc');
   const [taskOffset, setTaskOffset] = useState(0);
@@ -181,6 +184,37 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
     await reloadList();
   };
 
+  const handlePrintList = async () => {
+    if (!selectedListId) {
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+
+    if (!printWindow) {
+      return;
+    }
+
+    const loadingMessage = printWindow.document.createElement('p');
+    loadingMessage.textContent = 'Preparing print sheet...';
+    printWindow.document.body.replaceChildren(loadingMessage);
+    setIsPrintingList(true);
+
+    try {
+      const printableList = await printList(selectedListId, {
+        field: taskSortField,
+        ascending: taskSortDirection === 'asc',
+      });
+
+      writePrintableListSheet(printWindow, printableList);
+    } catch (error) {
+      console.error('Failed to print list:', error);
+      printWindow.close();
+    } finally {
+      setIsPrintingList(false);
+    }
+  };
+
   const handleSaveTaskName = async (item: ListItemSearchResult, name: string) => {
     if (!selectedListId) {
       return;
@@ -275,7 +309,9 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
             taskSortDirection={taskSortDirection}
             totalTaskCount={totalTaskCount}
             isCreateTaskModalOpen={isCreateTaskModalOpen}
+            isPrintingList={isPrintingList}
             onAddTaskClick={handleAddTaskClick}
+            onPrintList={handlePrintList}
             onCloseCreateModal={() => setIsCreateTaskModalOpen(false)}
             onCreateTask={handleCreateTask}
             onSaveTaskName={handleSaveTaskName}

@@ -83,6 +83,19 @@ export interface ListItemSearchResult {
     soonestChildDueDate?: string | null;
 }
 
+export interface ListPrintItemResult {
+    id: string;
+    name: string;
+    isCompleted: boolean;
+    subItems: ListPrintItemResult[];
+}
+
+export interface ListPrintResult {
+    id: string;
+    name: string;
+    items: ListPrintItemResult[];
+}
+
 export interface GetListResult {
     id: string;
     name: string;
