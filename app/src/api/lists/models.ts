@@ -12,6 +12,7 @@ export interface CreateListResponse {
 export interface CreateListItemRequest {
   name: string;
   dueDate?: string | null;
+  parentListItemId?: string | null;
 }
 
 export interface RenameListItemRequest {
@@ -50,6 +51,7 @@ export interface SearchListResponse {
 
 export interface SearchListItemsRequest {
     text?: string;
+    parentListItemId?: string | null;
     orderBy: FieldOrderRequest;
     pageSize: number;
     offset: number;
@@ -76,6 +78,22 @@ export interface ListItemSearchResult {
     name: string;
     isCompleted: boolean;
     dueDate?: string | null;
+    totalChildren: number;
+    totalChildrenCompleted: number;
+    soonestChildDueDate?: string | null;
+}
+
+export interface ListPrintItemResult {
+    id: string;
+    name: string;
+    isCompleted: boolean;
+    subItems: ListPrintItemResult[];
+}
+
+export interface ListPrintResult {
+    id: string;
+    name: string;
+    items: ListPrintItemResult[];
 }
 
 export interface GetListResult {

@@ -12,11 +12,13 @@ namespace Api.Services;
 
 public interface IListItemService
 {
-    public Task<Guid> CreateAsync(Guid userId, Guid listId, string name, DateTime? dueDate, CancellationToken cancellationToken = default);
+    public Task<Guid> CreateAsync(Guid userId, Guid listId, Guid? listItemParentId, string name, DateTime? dueDate, CancellationToken cancellationToken = default);
 
     public Task<SearchResultsResponseModel<ListItemSearchResult>> SearchAsync(Guid userId, ListItemSearchCriteria criteria, CancellationToken cancellationToken = default);
 
     public Task<ListItemGetResult> GetAsync(Guid userId, Guid listId, Guid itemId, CancellationToken cancellationToken = default);
+    
+    public Task<List<ListItemGetResult>> GetChildrenAsync(Guid userId, Guid listId, Guid itemId, CancellationToken cancellationToken = default);
 
     public Task RenameAsync(Guid userId, Guid listId, Guid itemId, string name, CancellationToken cancellationToken = default);
 
@@ -42,7 +44,7 @@ public class ListItemService : IListItemService
         _validator = validator;
         _logger = logger;
     }
-    public async Task<Guid> CreateAsync(Guid userId, Guid listId, string name, DateTime? dueDate, CancellationToken cancellationToken = default)
+    public async Task<Guid> CreateAsync(Guid userId, Guid listId, Guid? listItemParentId, string name, DateTime? dueDate, CancellationToken cancellationToken = default)
     {
         await using var _dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         
@@ -50,10 +52,34 @@ public class ListItemService : IListItemService
         var listExists = await _dbContext.Lists
             .WhereCurrentUserHasAccess(userId)
             .AnyAsync(l => l.Id == listId, cancellationToken);
+
+        var listItemParentExists = listItemParentId == null ? true : await _dbContext.ListItems
+            .WhereCurrentUserHasAccess(userId)
+            .WhereParentList(listId)
+            .AnyAsync(li => li.Id == listItemParentId.Value && li.ParentListItemId == null, cancellationToken);
         
         if (!listExists)
         {
             throw new NotFoundException($"List {listId} not found or access denied");
+        }
+        if (!listItemParentExists)
+        {
+            throw new NotFoundException($"Parent list item {listItemParentId} not found or access denied");
+        }
+        
+        // Verify parent doesn't already have 10 children
+        if (listItemParentId.HasValue)
+        {
+            var childrenCount = await _dbContext.ListItems
+                .WhereCurrentUserHasAccess(userId)
+                .WhereParentList(listId)
+                .Where(li => li.ParentListItemId == listItemParentId.Value)
+                .CountAsync(cancellationToken);
+            
+            if (childrenCount >= 10)
+            {
+                throw new ValidationException("A list item cannot have more than 10 child items.");
+            }
         }
         
         var newListItem = new ListItemEntity()
@@ -64,7 +90,8 @@ public class ListItemService : IListItemService
             CreatedOn = DateTime.UtcNow,
             UpdatedOn = DateTime.UtcNow,
             DueDate = dueDate,
-            ParentId = listId 
+            ParentId = listId,
+            ParentListItemId = listItemParentId
         };
 
         await _validator.ValidateAsync(newListItem);
@@ -102,6 +129,20 @@ public class ListItemService : IListItemService
                 Name = li.Name,
                 IsCompleted = li.IsCompleted,
                 DueDate = li.DueDate,
+                TotalChildren = _dbContext.ListItems
+                    .WhereCurrentUserHasAccess(userId)
+                    .WhereParentList(criteria.ListId)
+                    .Count(c => c.ParentListItemId == li.Id),
+                TotalChildrenCompleted = _dbContext.ListItems
+                    .WhereCurrentUserHasAccess(userId)
+                    .WhereParentList(criteria.ListId)
+                    .Count(c => c.ParentListItemId == li.Id && c.IsCompleted),
+                SoonestChildDueDate = _dbContext.ListItems
+                    .WhereCurrentUserHasAccess(userId)
+                    .WhereParentList(criteria.ListId)
+                    .Where(c => c.ParentListItemId == li.Id)
+                    .Where(c => c.DueDate != null)
+                    .Min(c => c.DueDate),
             })
             .ToListAsync(cancellationToken);
 
@@ -120,7 +161,7 @@ public class ListItemService : IListItemService
         
         var item = await _dbContext.ListItems
             .WhereCurrentUserHasAccess(userId)
-            .WhereParent(listId)
+            .WhereParentList(listId)
             .Where(li => li.Id == itemId)
             .Select(li => new ListItemGetResult
             {
@@ -133,11 +174,90 @@ public class ListItemService : IListItemService
                 ParentName = li.Parent.Name,
                 CategoryName = li.Parent.Category != null ? li.Parent.Category.Name : string.Empty,
                 CreatedOn = li.CreatedOn,
-                UpdatedOn = li.UpdatedOn
+                UpdatedOn = li.UpdatedOn,
+                HasChildren = _dbContext.ListItems
+                    .WhereCurrentUserHasAccess(userId)
+                    .WhereParentList(listId)
+                    .Any(c => c.ParentListItemId == li.Id),
+                TotalChildren = _dbContext.ListItems
+                    .WhereCurrentUserHasAccess(userId)
+                    .WhereParentList(listId)
+                    .Count(c => c.ParentListItemId == li.Id),
+                TotalChildrenCompleted = _dbContext.ListItems
+                    .WhereCurrentUserHasAccess(userId)
+                    .WhereParentList(listId)
+                    .Count(c => c.ParentListItemId == li.Id && c.IsCompleted),
+                SoonestChildDueDate = _dbContext.ListItems
+                    .WhereCurrentUserHasAccess(userId)
+                    .WhereParentList(listId)
+                    .Where(c => c.ParentListItemId == li.Id)
+                    .Where(c => c.DueDate != null)
+                    .Min(c => c.DueDate)
             })
             .FirstOrDefaultAsync(cancellationToken);
         
         if (item == null)
+        {
+            throw new NotFoundException($"List item {itemId} not found or access denied");
+        }
+
+        return item;
+    }
+
+    public async Task<List<ListItemGetResult>> GetChildrenAsync(Guid userId, Guid listId, Guid itemId, CancellationToken cancellationToken = default)
+    {
+        await using var _dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        
+        var parentExists = await _dbContext.ListItems
+            .WhereCurrentUserHasAccess(userId)
+            .WhereParentList(listId)
+            .AnyAsync(li => li.Id == itemId, cancellationToken);
+
+        if (!parentExists)
+        {
+            throw new NotFoundException($"List item {itemId} not found or access denied");
+        }
+
+        var item = await _dbContext.ListItems
+            .WhereCurrentUserHasAccess(userId)
+            .WhereParentList(listId)
+            .Where(child => child.ParentListItemId == itemId)
+            .Select(child =>
+                new ListItemGetResult
+                {
+                    Id = child.Id,
+                    Name = child.Name,
+                    IsCompleted = child.IsCompleted,
+                    DueDate = child.DueDate,
+                    SortIndex = child.SortIndex,
+                    ParentId = child.ParentId,
+                    ParentName = child.Parent.Name,
+                    CategoryName = child.Parent.Category != null ? child.Parent.Category.Name : string.Empty,
+                    CreatedOn = child.CreatedOn,
+                    UpdatedOn = child.UpdatedOn,
+                    HasChildren = _dbContext.ListItems
+                        .WhereCurrentUserHasAccess(userId)
+                        .WhereParentList(listId)
+                        .Any(c => c.ParentListItemId == child.Id),
+                    TotalChildren = _dbContext.ListItems
+                        .WhereCurrentUserHasAccess(userId)
+                        .WhereParentList(listId)
+                        .Count(c => c.ParentListItemId == child.Id),
+                    TotalChildrenCompleted = _dbContext.ListItems
+                        .WhereCurrentUserHasAccess(userId)
+                        .WhereParentList(listId)
+                        .Count(c => c.ParentListItemId == child.Id && c.IsCompleted),
+                    SoonestChildDueDate = _dbContext.ListItems
+                        .WhereCurrentUserHasAccess(userId)
+                        .WhereParentList(listId)
+                        .Where(c => c.ParentListItemId == child.Id)
+                        .Where(c => c.DueDate != null)
+                        .Min(c => c.DueDate)
+                })
+            .OrderBy(c => c.SortIndex).ThenBy(c => c.Id)
+            .ToListAsync(cancellationToken);
+        
+        if (!item.Any())
         {
             throw new NotFoundException($"List item {itemId} not found or access denied");
         }
@@ -151,7 +271,7 @@ public class ListItemService : IListItemService
         
         var item = await _dbContext.ListItems
             .WhereCurrentUserHasAccess(userId)
-            .WhereParent(listId)
+            .WhereParentList(listId)
             .FirstOrDefaultAsync(li => li.Id == itemId, cancellationToken);
         
         if (item == null)
@@ -174,7 +294,7 @@ public class ListItemService : IListItemService
         
         var item = await _dbContext.ListItems
             .WhereCurrentUserHasAccess(userId)
-            .WhereParent(listId)
+            .WhereParentList(listId)
             .FirstOrDefaultAsync(li => li.Id == itemId, cancellationToken);
         
         if (item == null)
@@ -196,7 +316,7 @@ public class ListItemService : IListItemService
         
         var item = await _dbContext.ListItems
             .WhereCurrentUserHasAccess(userId)
-            .WhereParent(listId)
+            .WhereParentList(listId)
             .FirstOrDefaultAsync(li => li.Id == itemId, cancellationToken);
         
         if (item == null)
@@ -216,7 +336,7 @@ public class ListItemService : IListItemService
         
         var item = await _dbContext.ListItems
             .WhereCurrentUserHasAccess(userId)
-            .WhereParent(listId)
+            .WhereParentList(listId)
             .FirstOrDefaultAsync(li => li.Id == itemId, cancellationToken);
         
         if (item == null)

@@ -1,4 +1,3 @@
-using System;
 using Api.Domain.Exceptions;
 using Api.Infrastructure.Entities;
 

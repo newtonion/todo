@@ -1,5 +1,17 @@
 .main-page-table-header {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 0.75rem;
+}
+
+.main-page-table-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.task-list-print-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
 }

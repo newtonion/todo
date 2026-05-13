@@ -2,11 +2,18 @@ import { useState } from 'react';
 import CreateModal from '../shared/CreateModal';
 
 type TaskCreateModalProps = {
+  title?: string;
+  submitLabel?: string;
   onClose: () => void;
   onCreate: (name: string, dueDate?: string) => void | Promise<void>;
 };
 
-const TaskCreateModal = ({ onClose, onCreate }: TaskCreateModalProps) => {
+const TaskCreateModal = ({
+  title = 'New task',
+  submitLabel,
+  onClose,
+  onCreate,
+}: TaskCreateModalProps) => {
   const [taskName, setTaskName] = useState('');
   const [dueDate, setDueDate] = useState('');
 
@@ -14,9 +21,10 @@ const TaskCreateModal = ({ onClose, onCreate }: TaskCreateModalProps) => {
 
   return (
     <CreateModal
-      title="New task"
+      title={title}
       className="task-create-modal"
       isValid={!!trimmedName}
+      submitLabel={submitLabel}
       onClose={onClose}
       onSubmit={() => onCreate(trimmedName, dueDate || undefined)}
       fields={[

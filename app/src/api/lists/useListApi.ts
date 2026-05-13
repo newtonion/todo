@@ -6,6 +6,8 @@ import type {
   CreateListResponse,
   CountListResult,
   GetListResult,
+  ListItemSearchResult,
+  ListPrintResult,
   RenameListItemRequest,
   SearchListItemsRequest,
   SearchListItemsResponse,
@@ -31,7 +33,24 @@ export const useListApi = () => {
       query.set('text', request.text);
     }
 
+    if (request.parentListItemId) {
+      query.set('parentListItemId', request.parentListItemId);
+    }
+
     return `lists/${listId}/items?${query.toString()}`;
+  };
+
+  const buildListPrintEndpoint = (listId: string, orderBy?: SearchListItemsRequest['orderBy']) => {
+    if (!orderBy) {
+      return `list/${listId}/print`;
+    }
+
+    const query = new URLSearchParams({
+      'OrderBy.Field': orderBy.field,
+      'OrderBy.Ascending': orderBy.ascending.toString(),
+    });
+
+    return `list/${listId}/print?${query.toString()}`;
   };
 
   return useMemo(
@@ -39,6 +58,7 @@ export const useListApi = () => {
       createListItem: (listId: string, request: CreateListItemRequest) => fetchWithAuth<string, CreateListItemRequest>(`lists/${listId}/items`, { method: 'POST', body: request }),
       createList: (request: CreateListRequest) => fetchWithAuth<CreateListResponse, CreateListRequest>('list', { method: 'POST', body: request }),
       getList: (id: string) => fetchWithAuth<GetListResult>(`list/${id}`),
+      printList: (id: string, orderBy?: SearchListItemsRequest['orderBy']) => fetchWithAuth<ListPrintResult>(buildListPrintEndpoint(id, orderBy)),
       renameList: (id: string, request: UpdateListRequest) => fetchWithAuth<void, UpdateListRequest>(`list/${id}`, { method: 'PUT', body: request }),
       searchLists: (request: SearchListRequest) => fetchWithAuth<SearchListResponse, SearchListRequest>('list/search', { method: 'POST', body: request }),
       searchListItems: (listId: string, request: SearchListItemsRequest) => fetchWithAuth<SearchListItemsResponse>(buildListItemsSearchEndpoint(listId, request)),
@@ -46,6 +66,7 @@ export const useListApi = () => {
       archiveList: (id: string) => fetchWithAuth<void>(`list/${id}/archive`, { method: 'POST' }),
       completeList: (id: string) => fetchWithAuth<void>(`list/${id}/complete`, { method: 'POST' }),
       deleteListItem: (listId: string, itemId: string) => fetchWithAuth<void>(`lists/${listId}/items/${itemId}`, { method: 'DELETE' }),
+      getListItemChildren: (listId: string, itemId: string) => fetchWithAuth<ListItemSearchResult[]>(`lists/${listId}/items/${itemId}/children`),
       renameListItem: (listId: string, itemId: string, request: RenameListItemRequest) => fetchWithAuth<void, RenameListItemRequest>(`lists/${listId}/items/${itemId}/rename`, { method: 'POST', body: request }),
       setListItemDueDate: (listId: string, itemId: string, request: SetListItemDueDateRequest) => fetchWithAuth<void, SetListItemDueDateRequest>(`lists/${listId}/items/${itemId}/due-date`, { method: 'POST', body: request }),
       toggleListItemCompletion: (listId: string, itemId: string) => fetchWithAuth<void>(`lists/${listId}/items/${itemId}/toggle`, { method: 'POST' }),

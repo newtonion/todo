@@ -33,7 +33,7 @@ public class ListItemEntityExtensionsTests
     }
 
     [Fact]
-    public async Task WhereParent_WhenParentIdIsProvided_FiltersByParent()
+    public async Task WhereParentList_WhenParentIdIsProvided_FiltersByParent()
     {
         var database = new TestDatabase();
         await using var context = database.CreateContext();
@@ -45,7 +45,7 @@ public class ListItemEntityExtensionsTests
         await context.SaveChangesAsync();
 
         var name = await context.ListItems
-            .WhereParent(firstList.Id)
+            .WhereParentList(firstList.Id)
             .Select(li => li.Name)
             .SingleAsync();
 
@@ -88,7 +88,7 @@ public class ListItemEntityExtensionsTests
         await context.SaveChangesAsync();
 
         var names = await context.ListItems
-            .WhereParent(list.Id)
+            .WhereParentList(list.Id)
             .SortEntity(
             [
                 new FieldOrderRequest { Field = "status", Ascending = true },
@@ -98,5 +98,51 @@ public class ListItemEntityExtensionsTests
             .ToListAsync();
 
         Assert.Equal(["Completed", "Overdue", "Today"], names);
+    }
+
+    [Fact]
+    public async Task WhereParentListItem_WhenNullIsProvided_ReturnsRootItems()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var list = AddList(context, "Sprint", UserId, category.Id);
+        var parentItem = AddItem(context, "Parent", list.Id, UserId);
+        await context.SaveChangesAsync();
+        AddItem(context, "Child", list.Id, UserId, parentListItemId: parentItem.Id);
+        AddItem(context, "Standalone", list.Id, UserId);
+        await context.SaveChangesAsync();
+
+        var names = await context.ListItems
+            .WhereParentListItem(null)
+            .OrderBy(li => li.Name)
+            .Select(li => li.Name)
+            .ToListAsync();
+
+        Assert.Equal(["Parent", "Standalone"], names);
+    }
+
+    [Fact]
+    public async Task WhereParentListItem_WhenParentListItemIdIsProvided_FiltersByParentListItem()
+    {
+        var database = new TestDatabase();
+        await using var context = database.CreateContext();
+        var category = AddCategory(context, "Work", UserId);
+        var list = AddList(context, "Sprint", UserId, category.Id);
+        var parentItem = AddItem(context, "Parent", list.Id, UserId);
+        var anotherParentItem = AddItem(context, "AnotherParent", list.Id, UserId);
+        await context.SaveChangesAsync();
+        AddItem(context, "Child1", list.Id, UserId, parentListItemId: parentItem.Id);
+        AddItem(context, "Child2", list.Id, UserId, parentListItemId: parentItem.Id);
+        AddItem(context, "OtherChild", list.Id, UserId, parentListItemId: anotherParentItem.Id);
+        await context.SaveChangesAsync();
+
+        var names = await context.ListItems
+            .WhereParentListItem(parentItem.Id)
+            .OrderBy(li => li.Name)
+            .Select(li => li.Name)
+            .ToListAsync();
+
+        Assert.Equal(["Child1", "Child2"], names);
     }
 }

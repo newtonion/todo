@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useListApi } from '../../api/lists/useListApi';
 import type { CountListResult, GetListResult, ListItemSearchResult } from '../../api/lists/models';
+import { writePrintableListSheet } from '../../utils/printListSheet';
 import { useListHeader } from '../hooks/useListHeader';
 import ListHeader from './ListHeader';
 import TaskList from './TaskList';
@@ -25,7 +26,9 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
   const {
     getCounts,
     createListItem,
+    getListItemChildren,
     getList,
+    printList,
     renameList,
     renameListItem,
     searchListItems,
@@ -38,6 +41,7 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
   } = useListApi();
   const [loadState, setLoadState] = useState<ListLoadState | null>(null);
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
+  const [isPrintingList, setIsPrintingList] = useState(false);
   const [taskSortField, setTaskSortField] = useState<TaskSortField>('dueDate');
   const [taskSortDirection, setTaskSortDirection] = useState<SortDirection>('asc');
   const [taskOffset, setTaskOffset] = useState(0);
@@ -167,6 +171,50 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
     await reloadList();
   };
 
+  const handleCreateSubtask = async (parentItem: ListItemSearchResult, name: string, dueDate?: string) => {
+    if (!selectedListId) {
+      return;
+    }
+
+    await createListItem(selectedListId, {
+      name,
+      dueDate: dueDate || null,
+      parentListItemId: parentItem.id,
+    });
+    await reloadList();
+  };
+
+  const handlePrintList = async () => {
+    if (!selectedListId) {
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+
+    if (!printWindow) {
+      return;
+    }
+
+    const loadingMessage = printWindow.document.createElement('p');
+    loadingMessage.textContent = 'Preparing print sheet...';
+    printWindow.document.body.replaceChildren(loadingMessage);
+    setIsPrintingList(true);
+
+    try {
+      const printableList = await printList(selectedListId, {
+        field: taskSortField,
+        ascending: taskSortDirection === 'asc',
+      });
+
+      writePrintableListSheet(printWindow, printableList);
+    } catch (error) {
+      console.error('Failed to print list:', error);
+      printWindow.close();
+    } finally {
+      setIsPrintingList(false);
+    }
+  };
+
   const handleSaveTaskName = async (item: ListItemSearchResult, name: string) => {
     if (!selectedListId) {
       return;
@@ -201,6 +249,14 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
 
     await deleteListItem(selectedListId, item.id);
     await reloadList();
+  };
+
+  const handleLoadChildTasks = async (item: ListItemSearchResult) => {
+    if (!selectedListId) {
+      return [];
+    }
+
+    return getListItemChildren(selectedListId, item.id);
   };
 
   const handleTaskSortChange = (field: TaskSortField) => {
@@ -253,13 +309,17 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
             taskSortDirection={taskSortDirection}
             totalTaskCount={totalTaskCount}
             isCreateTaskModalOpen={isCreateTaskModalOpen}
+            isPrintingList={isPrintingList}
             onAddTaskClick={handleAddTaskClick}
+            onPrintList={handlePrintList}
             onCloseCreateModal={() => setIsCreateTaskModalOpen(false)}
             onCreateTask={handleCreateTask}
             onSaveTaskName={handleSaveTaskName}
             onSaveTaskDueDate={handleSaveTaskDueDate}
             onToggleTaskCompletion={handleToggleTaskCompletion}
             onDeleteTask={handleDeleteTask}
+            onCreateSubtask={handleCreateSubtask}
+            onLoadChildTasks={handleLoadChildTasks}
             onTaskSortChange={handleTaskSortChange}
             onPreviousTaskPage={handlePreviousTaskPageClick}
             onNextTaskPage={handleNextTaskPageClick}
