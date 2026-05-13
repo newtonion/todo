@@ -25,6 +25,7 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
   const {
     getCounts,
     createListItem,
+    getListItemChildren,
     getList,
     renameList,
     renameListItem,
@@ -167,6 +168,19 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
     await reloadList();
   };
 
+  const handleCreateSubtask = async (parentItem: ListItemSearchResult, name: string, dueDate?: string) => {
+    if (!selectedListId) {
+      return;
+    }
+
+    await createListItem(selectedListId, {
+      name,
+      dueDate: dueDate || null,
+      parentListItemId: parentItem.id,
+    });
+    await reloadList();
+  };
+
   const handleSaveTaskName = async (item: ListItemSearchResult, name: string) => {
     if (!selectedListId) {
       return;
@@ -201,6 +215,14 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
 
     await deleteListItem(selectedListId, item.id);
     await reloadList();
+  };
+
+  const handleLoadChildTasks = async (item: ListItemSearchResult) => {
+    if (!selectedListId) {
+      return [];
+    }
+
+    return getListItemChildren(selectedListId, item.id);
   };
 
   const handleTaskSortChange = (field: TaskSortField) => {
@@ -260,6 +282,8 @@ const ListSection = ({ selectedListId }: ListSectionProps) => {
             onSaveTaskDueDate={handleSaveTaskDueDate}
             onToggleTaskCompletion={handleToggleTaskCompletion}
             onDeleteTask={handleDeleteTask}
+            onCreateSubtask={handleCreateSubtask}
+            onLoadChildTasks={handleLoadChildTasks}
             onTaskSortChange={handleTaskSortChange}
             onPreviousTaskPage={handlePreviousTaskPageClick}
             onNextTaskPage={handleNextTaskPageClick}

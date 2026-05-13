@@ -26,7 +26,14 @@
 
 .task-table .task-table-actions-header {
   padding: 0.75rem 1rem;
+  text-align: right;
   color: var(--text-h);
+}
+
+.task-table .task-table-expander-header {
+  width: 2.75rem;
+  padding-inline: 0.65rem 0.25rem;
+  text-align: center;
 }
 
 .task-table-header-button {
@@ -69,9 +76,60 @@
   background: var(--social-bg);
 }
 
+.task-table tbody .task-table-row-child {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.task-table tbody .task-table-row-child:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .task-table td {
   padding: 0.875rem 1rem;
   vertical-align: middle;
+}
+
+.task-table .task-table-expander-cell {
+  width: 2.75rem;
+  padding-inline: 0.65rem 0.25rem;
+  text-align: center;
+}
+
+.task-table-expand-button {
+  color: var(--text);
+}
+
+.task-table-expand-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.task-table-child-connector {
+  display: inline-flex;
+  width: 0.25rem;
+  height: 1.25rem;
+  margin-inline: auto;
+  border-radius: var(--radius-pill);
+  opacity: 0.65;
+  background:
+    radial-gradient(circle, var(--text) 0.12rem, transparent 0.13rem) center 0.15rem / 0.25rem 0.25rem no-repeat,
+    radial-gradient(circle, var(--text) 0.12rem, transparent 0.13rem) center 0.5rem / 0.25rem 0.25rem no-repeat,
+    radial-gradient(circle, var(--text) 0.12rem, transparent 0.13rem) center 0.85rem / 0.25rem 0.25rem no-repeat;
+}
+
+.task-table-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.task-table-row-child .task-table-name-cell {
+  padding-left: 1.75rem;
+}
+
+.task-table-name-value {
+  min-width: 0;
+  flex: 1;
 }
 
 .task-table-status {
@@ -106,6 +164,7 @@
 .task-table-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.65rem;
 }
 

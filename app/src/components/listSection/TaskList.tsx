@@ -19,6 +19,8 @@ type TaskListProps = {
   onSaveTaskDueDate: (item: ListItemSearchResult, dueDate: string | null) => Promise<void>;
   onToggleTaskCompletion: (item: ListItemSearchResult) => Promise<void>;
   onDeleteTask: (item: ListItemSearchResult) => Promise<void>;
+  onCreateSubtask: (parentItem: ListItemSearchResult, name: string, dueDate?: string) => Promise<void>;
+  onLoadChildTasks: (item: ListItemSearchResult) => Promise<ListItemSearchResult[]>;
   onTaskSortChange: (field: TaskSortField) => void;
   onPreviousTaskPage: () => void;
   onNextTaskPage: () => void;
@@ -39,6 +41,8 @@ const TaskList = ({
   onSaveTaskDueDate,
   onToggleTaskCompletion,
   onDeleteTask,
+  onCreateSubtask,
+  onLoadChildTasks,
   onTaskSortChange,
   onPreviousTaskPage,
   onNextTaskPage,
@@ -47,7 +51,7 @@ const TaskList = ({
     <>
       <div className="main-page-table-header">
         <AddIconButton
-          ariaLabel="Add task"
+          ariaLabel="Add a list item"
           onClick={onAddTaskClick}
         />
       </div>
@@ -65,6 +69,8 @@ const TaskList = ({
         onSortChange={onTaskSortChange}
         onToggleCompletion={onToggleTaskCompletion}
         onDeleteItem={onDeleteTask}
+        onCreateChildItem={onCreateSubtask}
+        onLoadChildItems={onLoadChildTasks}
       />
       {isCreateTaskModalOpen && (
         <TaskCreateModal
