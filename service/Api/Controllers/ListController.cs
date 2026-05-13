@@ -54,6 +54,24 @@ namespace Api.Controllers
         }
 
         /// <summary>
+        /// Gets a list by ID
+        /// </summary>
+        /// <param name="id">The list ID</param>
+        /// <param name="request">Print options including sort order</param>
+        /// <returns>The list details including items</returns>
+        /// <response code="200">Returns the list</response>
+        /// <response code="404">If the list is not found</response>
+        [HttpGet("{id}/print")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Print(Guid id, [FromQuery] ListPrintRequest request)
+        {
+            var userId = GetUserId();
+            var result = await _listService.PrintAsync(userId, id, request.OrderBy);
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Gets counts for a list including total items and completed items
         /// </summary>
         /// <param name="id">The list ID</param>

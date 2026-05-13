@@ -17,6 +17,7 @@ public interface IListService
     public Task ToggleArchiveAsync(Guid userId, Guid listId, CancellationToken cancellationToken = default);
     public Task<SearchResultsResponseModel<ListSearchResult>> SearchAsync(Guid userId, ListSearchCriteria searchCriteria, CancellationToken cancellationToken = default);
     public Task<ListGetResult> GetAsync(Guid userId, Guid listId, CancellationToken cancellationToken = default);
+    public Task<ListPrintResult> PrintAsync(Guid userId, Guid listId, FieldOrderRequest? orderBy = null, CancellationToken cancellationToken = default);
     public Task SetCategoryAsync(Guid userId, Guid listId, Guid? categoryId, CancellationToken cancellationToken = default);
     public Task<ListCountResult> GetCountsAsync(Guid userId, Guid listId, CancellationToken cancellationToken = default);
 }
@@ -228,6 +229,79 @@ public class ListService : IListService
             CategoryId = list.CategoryId,
             Archived = list.Archived,
             IsCompleted = list.IsCompleted
+        };
+    }
+
+    public async Task<ListPrintResult> PrintAsync(Guid userId, Guid listId, FieldOrderRequest? orderBy = null, CancellationToken cancellationToken = default)
+    {
+        await using var _dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        
+        // Get list info if it exists and user has access
+        var list = await _dbContext.Lists
+            .WhereCurrentUserHasAccess(userId)
+            .Where(l => l.Id == listId)
+            .Select(l => new { l.Id, l.Name })
+            .FirstOrDefaultAsync(cancellationToken);
+            
+        if (list == null)
+        {
+            throw new NotFoundException();
+        }
+        
+        // Fetch parent items with sorting
+        var sorts = orderBy != null 
+            ? new[] { orderBy } 
+            : new[] { new FieldOrderRequest { Field = "customSort", Ascending = true } };
+        
+        var parentItems = await _dbContext.ListItems
+            .WhereCurrentUserHasAccess(userId)
+            .Where(i => i.ParentId == listId && i.ParentListItemId == null)
+            .SortEntity(sorts, ListItemEntity.SortMappings)
+            .Select(i => new
+            {
+                i.Id,
+                i.Name,
+                i.IsCompleted
+            })
+            .ToListAsync(cancellationToken);
+        
+        // Fetch all subitems
+        var subItems = await _dbContext.ListItems
+            .WhereCurrentUserHasAccess(userId)
+            .Where(i => i.ParentId == listId && i.ParentListItemId != null)
+            .Select(i => new
+            {
+                i.Id,
+                i.Name,
+                i.IsCompleted,
+                i.ParentListItemId
+            })
+            .OrderBy(x=> x.Id)
+            .ToListAsync(cancellationToken);
+        
+        // Group subitems by parent
+        var subItemsLookup = subItems.ToLookup(i => i.ParentListItemId);
+        
+        return new ListPrintResult
+        {
+            Id = list.Id,
+            Name = list.Name,
+            Items = parentItems
+                .Select(i => new ListPrintItemResult
+                {
+                    Id = i.Id,
+                    Name = i.Name,
+                    IsCompleted = i.IsCompleted,
+                    SubItems = subItemsLookup[i.Id]
+                        .Select(si => new ListPrintItemResult
+                        {
+                            Id = si.Id,
+                            Name = si.Name,
+                            IsCompleted = si.IsCompleted
+                        })
+                        .ToList()
+                })
+                .ToList()
         };
     }
 
