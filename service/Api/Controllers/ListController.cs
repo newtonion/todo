@@ -37,7 +37,7 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Gets a list by ID with item counts
+        /// Gets a list by ID
         /// </summary>
         /// <param name="id">The list ID</param>
         /// <returns>The list details including items</returns>
